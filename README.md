@@ -1,4 +1,4 @@
-# researchtool
+# OPENAI X SKT
 
 A new Flutter project.
 
