@@ -31,4 +31,16 @@ class UserInfo {
       return {};
     }
   }
+
+  static void deleteUserInfo(String accessToken) async {
+    try {
+      await http.delete(
+        Uri.parse(url),
+        headers: {'Authorization': 'Bearer $accessToken'},
+      );
+    } catch (error) {
+      //MyFluroRouter.navigatorKey.currentState?.pushNamed('/login');
+      print(error);
+    }
+  }
 }

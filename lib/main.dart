@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:fluro/fluro.dart';
 //import 'package:url_strategy/url_strategy.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
+import 'package:provider/provider.dart';
 import 'package:researchtool/authscreen.dart';
 import 'package:researchtool/home.dart';
+import 'package:researchtool/model/dratf.dart';
 import 'package:researchtool/screens/create.dart';
 import 'package:researchtool/screens/datasource.dart';
 import 'package:researchtool/screens/email_login.dart';
@@ -14,7 +16,9 @@ import 'package:researchtool/screens/signup.dart';
 void main() {
   setUrlStrategy(PathUrlStrategy());
   MyFluroRouter.setupRouter();
-  runApp(const MyApp());
+  runApp(MultiProvider(
+      providers: [ChangeNotifierProvider(create: (context) => DraftModel())],
+      child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -79,14 +83,14 @@ class MyFluroRouter {
   static final Handler _AddDataPageHandler = Handler(
       handlerFunc: (BuildContext? context, Map<String, dynamic> params) {
     final args = context!.settings!.arguments as Map;
-
     List<Information> selectedUrls = args["selectedInformationList"];
-
     String projectName = args["projectName"];
+    int projectId = args["projectId"];
 
     return DataSourceScreen(
       selectedUrls: selectedUrls,
       projectName: projectName,
+      projectId: projectId,
     );
   });
   static final Handler _BuildPageHandler = Handler(
@@ -98,8 +102,17 @@ class MyFluroRouter {
           const AuthScreen());
 
   static final Handler _ResultHandler = Handler(
-      handlerFunc: (BuildContext? context, Map<String, dynamic> params) =>
-          const ResultScreen());
+      handlerFunc: (BuildContext? context, Map<String, dynamic> params) {
+    final args = context!.settings!.arguments as Map;
+    final draftId = args["draftId"];
+    final projectName = args["projectName"];
+    final projectId = args["projectId"];
+    return ResultScreen(
+      draftId: draftId,
+      projectName: projectName,
+      projectId: projectId,
+    );
+  });
 
   static void setupRouter() {
     router.define("/",
@@ -115,10 +128,10 @@ class MyFluroRouter {
         handler: _SignUpPageHandler, transitionType: TransitionType.fadeIn);
     router.define("/build",
         handler: _BuildPageHandler, transitionType: TransitionType.fadeIn);
-    router.define("/add/data/:projectname/:selected_data",
+    router.define("/add/data/:projectname/:projectId/:sourcetype",
         handler: _AddDataPageHandler, transitionType: TransitionType.fadeIn);
 
-    router.define("/result",
+    router.define("/edit/:projectname/:projectId",
         handler: _ResultHandler, transitionType: TransitionType.fadeIn);
   }
 }

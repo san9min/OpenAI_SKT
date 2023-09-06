@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:researchtool/api/signup.dart';
 import 'package:researchtool/main.dart';
+import 'package:cookie_wrapper/cookie.dart';
 
 class SignUpScreen extends StatefulWidget {
   final String userEmail;
@@ -445,11 +446,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     } else {
                       if (password1_controller.text ==
                           password2_controller.text) {
-                        final isExist = await EmailSingUp.registerEmail(
+                        final res = await EmailSingUp.registerEmail(
                             widget.userEmail, password2_controller.text);
-                        setState(() {
-                          response = isExist;
-                        });
+                        if (res["message"] == "register successed") {
+                          var cookie = Cookie.create();
+                          cookie.set('access_token', res["access_token"]);
+                          cookie.set('refresh_token', res["refresh_token"]);
+                          if (!mounted) return;
+                          MyFluroRouter.router
+                              .navigateTo(context, '/', replace: true);
+                        } else {
+                          setState(() {
+                            response = res['message'];
+                          });
+                        }
                       } else {
                         setState(() {
                           assertSame = false;

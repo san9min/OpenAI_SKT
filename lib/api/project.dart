@@ -133,17 +133,20 @@ class ProjectAPI {
   }
 
   // Return Message(Model Output)
-  static Future<String> draftFirstCreate(projectId, suggestionSelection,
-      webPages, files, text, image, youtube, accessToken) async {
+  static Future<Map> draftFirstCreate(projectId, suggestionSelection, webPages,
+      files, text, image, youtube) async {
+    var cookie = Cookie.create();
+    var accessToken = cookie.get('access_token');
     Uri firstCreateUrl = Uri.parse("$url$projectId/draft/first");
     var body = {
       "suggestion_selection": suggestionSelection,
       "web_pages": webPages,
-      "files": files,
       "text": text,
-      "image": image,
       "youtube": youtube
     };
+    body.removeWhere(
+        (key, value) => key != suggestionSelection && value.isEmpty);
+
     try {
       final response = await http.post(
         firstCreateUrl,
@@ -155,9 +158,68 @@ class ProjectAPI {
       );
 
       final res = jsonDecode(response.body);
-      return res['message'];
+      return res;
     } catch (error) {
-      return 'error';
+      return {};
     }
+  }
+
+  static Future<int> getProjectLastDraft(int projectId) async {
+    var cookie = Cookie.create();
+    var accessToken = cookie.get('access_token');
+    try {
+      final response = await http.get(
+        Uri.parse("$url$projectId/draft"),
+        headers: {'Authorization': 'Bearer $accessToken'},
+      );
+
+      final res = jsonDecode(response.body);
+      if (res.isEmpty) {
+        return -1;
+      } else {
+        return res[0]["id"];
+      }
+    } catch (error) {
+      return -1;
+    }
+  }
+
+  static Future<Map> getDraftStatus(int draftId) async {
+    var cookie = Cookie.create();
+    var accessToken = cookie.get('access_token');
+    String status = "WAIT";
+    Map returnValue = {};
+    try {
+      while (status != "COMPLETE") {
+        final response = await http.get(
+          Uri.parse('${url}draft/$draftId/queue'),
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer $accessToken"
+          },
+        );
+
+        if (response.statusCode == 200) {
+          // 응답 파싱
+          final data = jsonDecode(response.body);
+          final newStatus = data['status'];
+
+          status = newStatus;
+
+          if (status == "COMPLETE") {
+            final decodedResponse = utf8.decode(response.bodyBytes);
+
+            returnValue = jsonDecode(decodedResponse);
+            break;
+          }
+        }
+        // 1초마다 재시도
+        await Future.delayed(const Duration(seconds: 1));
+      }
+    } catch (error) {
+      print(error);
+    }
+
+    return returnValue;
   }
 }

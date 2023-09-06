@@ -16,26 +16,20 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  //final bool _loading = false;
-
   bool isExpansion = false;
 
   bool login = false;
-
   String? userName;
   String? userImg;
-
   bool isLoginButtonHovered = false;
   bool isSignUpButtonHovered = false;
 
-  String projectNamevalueText = "";
-  LandingText landingtext = LandingText(
-      title: "Mission",
-      content_text: "Make AI more useful to save people time and energy");
+  LandingText landingtext = LandingText(title: "", content_text: "");
+
   @override
   void initState() {
-    super.initState();
     checkLogin(context);
+    super.initState();
   }
 
   void checkLogin(BuildContext context) async {
@@ -47,11 +41,16 @@ class _HomeState extends State<Home> {
     var accessToken = cookie.get('access_token');
     var refreshToken = cookie.get('refresh_token');
 
-    if (accessToken != null && refreshToken != null) {
-      final userNameImg = await UserInfo.getUserInfo(accessToken, refreshToken);
+    if (accessToken != null) {
+      final userNameImg =
+          await UserInfo.getUserInfo(accessToken, refreshToken!);
 
       if (userNameImg.isEmpty) {
-        await MyFluroRouter.router.navigateTo(context, "/auth/login");
+        if (!mounted) return;
+        await MyFluroRouter.router.navigateTo(
+          context,
+          "/auth/login",
+        );
       } else {
         projectList =
             await ProjectAPI.getProjectList(accessToken, refreshToken);
@@ -62,37 +61,34 @@ class _HomeState extends State<Home> {
         });
       }
     } else {
-      RenderLandingText();
+      startLandingText();
     }
   }
 
-  Future<void> RenderLandingText() async {
+  Future<void> startLandingText() async {
     List<LandingText> landingtextList = [
       LandingText(
-          title: "자료조사 Assistant",
-          content_text: "생성 AI를 통해 자료조사에 걸리는 시간을 줄이세요!"),
+          title: "Research Agent", content_text: "자료 조사를 도와주는 나만의 Agent"),
       LandingText(
-          title: "자료 수집",
-          content_text: "Semantic Search를 통해 여러 웹사이트, 플랫폼에서 적절한 자료를 제안해드려요"),
+          title: "Article Sketching",
+          content_text: "프로젝트의 주제와 목적에 맞게 전체 흐름을 제안하고, 목차를 작성"),
       LandingText(
-          title: "자료 분석",
-          content_text: "수집한 자료를 학습한 Custom GPT가 더 정확한 답변을 해드려요"),
+          title: "Refernce Searching",
+          content_text: "각 목차의 근거와 관련 자료를 \n여러 웹사이트에서 검색 후 제안"),
       LandingText(
-          title: "자료 정리",
-          content_text: "프로젝트의 주제/목적과 수집한 자료를 바탕으로 GPT가 1차 초안을 작성해드려요")
+          title: "Draft & Visual Data Generation",
+          content_text: "목차와 자료를 바탕으로한 초안 작성과\n자연어를 통한 시각 자료 생성")
     ];
     while (!login) {
       for (final ltext in landingtextList) {
         landingtext = LandingText(title: ltext.title, content_text: "");
-        await StreamingLandingText(ltext.content_text);
+        await streamingLandingText(ltext.content_text);
         await Future.delayed(const Duration(milliseconds: 3000));
       }
     }
   }
 
-  Future<void> StreamingLandingText(String landerString) async {
-    // Initialize a new bot message with an empty string
-
+  Future<void> streamingLandingText(String landerString) async {
     for (var char in landerString.split('')) {
       await Future.delayed(const Duration(milliseconds: 50));
       setState(() {
@@ -121,8 +117,8 @@ class _HomeState extends State<Home> {
           ),
           content: const Text("프로젝트를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다."),
           actions: [
-            TextButton(
-              onPressed: () async {
+            InkWell(
+              onTap: () async {
                 bool deleteSuccess = await ProjectAPI.deleteProject(id);
 
                 if (deleteSuccess) {
@@ -172,78 +168,98 @@ class _HomeState extends State<Home> {
     );
   }
 
-// void _showSettingsDialog(BuildContext context, String accessToken) {
-//     showDialog(
-//       context: context,
-//       builder: (BuildContext context) {
-//         return AlertDialog(
-//           title: Row(
-//             children: [
-//               Icon(
-//                 Icons.settings,
-//                 color: Colors.grey,
-//                 size: 48,
-//               ),
-//               const Padding(
-//                 padding: EdgeInsets.all(8.0),
-//                 child: Text("설정"),
-//               ),
-//             ],
-//           ),
-//           content: Row(children: [
-
-//           ]),
-//           actions: [
-//             TextButton(
-//               onPressed: () async {
-//                 bool deleteSuccess = await ProjectAPI.deleteProject(id);
-
-//                 if (deleteSuccess) {
-//                   var cookie = Cookie.create();
-//                   var accessToken = cookie.get('access_token');
-//                   var refreshToken = cookie.get('refresh_token');
-
-//                   projectList = await ProjectAPI.getProjectList(
-//                       accessToken!, refreshToken!);
-//                   setState(() {});
-//                 }
-
-//                 Navigator.of(context).pop(); // 다이얼로그 닫기
-//               },
-//               child: Container(
-//                 padding:
-//                     const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-//                 decoration: BoxDecoration(
-//                     borderRadius: BorderRadius.circular(8),
-//                     color: Colors.red.shade800),
-//                 child: const Text(
-//                   '삭제',
-//                   style: TextStyle(color: Colors.white),
-//                 ),
-//               ),
-//             ),
-//             TextButton(
-//               onPressed: () {
-//                 Navigator.of(context).pop(); // 다이얼로그 닫기
-//               },
-//               child: Container(
-//                 padding:
-//                     const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-//                 decoration: BoxDecoration(
-//                   borderRadius: BorderRadius.circular(8),
-//                   color: Colors.grey.shade400,
-//                 ),
-//                 child: const Text(
-//                   '취소',
-//                   style: TextStyle(color: Colors.white),
-//                 ),
-//               ),
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
+  void _showSettingsDialog(BuildContext context, String accessToken) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color.fromRGBO(30, 34, 42, 1),
+          title: const Row(
+            children: [
+              Icon(
+                Icons.settings,
+                color: Colors.grey,
+                size: 48,
+              ),
+              Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text(
+                  "설정",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            height: 224,
+            width: MediaQuery.of(context).size.width > 700
+                ? MediaQuery.of(context).size.width / 3
+                : 280,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: 1,
+              itemBuilder: (context, index) {
+                return Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text("Delete account",
+                            style: TextStyle(color: Colors.white)),
+                        InkWell(
+                          onTap: () {
+                            var cookie = Cookie.create();
+                            cookie.remove('access_token');
+                            cookie.remove('refresh_token');
+                            UserInfo.deleteUserInfo(accessToken);
+                            Navigator.of(context).pop(); // 다이얼로그 닫기
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 12),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              color: Colors.red.shade700,
+                            ),
+                            child: const Text(
+                              '탈퇴',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(
+                      color: Colors.grey,
+                    )
+                  ],
+                );
+              },
+            ),
+          ),
+          actions: [
+            InkWell(
+              onTap: () {
+                Navigator.of(context).pop(); // 다이얼로그 닫기
+              },
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.grey.shade800,
+                ),
+                child: const Text(
+                  '확인',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   void dispose() {
@@ -315,7 +331,9 @@ class _HomeState extends State<Home> {
                       height: 12,
                     ),
                     SizedBox(
-                      width: MediaQuery.of(context).size.width / 2,
+                      width: MediaQuery.of(context).size.width > 700
+                          ? MediaQuery.of(context).size.width / 2
+                          : MediaQuery.of(context).size.width / 1.2,
                       height: MediaQuery.of(context).size.height / 1.5,
                       child: ListView.builder(
                         shrinkWrap: true,
@@ -352,18 +370,18 @@ class _HomeState extends State<Home> {
                         Text(landingtext.title,
                             style: const TextStyle(
                                 fontSize: 56,
-                                color: Colors.cyan,
+                                color: Colors.blue,
                                 fontWeight: FontWeight.bold)),
                         const SizedBox(
                           height: 12,
                         ),
                         Text(landingtext.content_text,
                             style: const TextStyle(
-                                fontSize: 36,
-                                color: Colors.white,
+                                fontSize: 32,
+                                color: Colors.white70,
                                 fontWeight: FontWeight.w500)),
                         SizedBox(
-                          height: MediaQuery.of(context).size.height / 3,
+                          height: MediaQuery.of(context).size.height / 5,
                         )
                       ],
                     ),
@@ -421,7 +439,7 @@ class _HomeState extends State<Home> {
               gradient: const LinearGradient(
                 colors: [
                   Colors.indigo,
-                  Colors.cyan,
+                  Colors.lightBlue,
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -454,21 +472,38 @@ class _HomeState extends State<Home> {
           children: [
             Stack(
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.adjust_rounded,
-                      color: Colors.grey,
-                    ),
-                    const SizedBox(
-                      width: 12,
-                    ),
-                    Text(
-                      name,
-                      style: const TextStyle(color: Colors.white, fontSize: 18),
-                    ),
-                  ],
+                InkWell(
+                  onTap: () async {
+                    int draftId = await ProjectAPI.getProjectLastDraft(id);
+                    if (!mounted) return;
+                    if (draftId == -1) {
+                    } else {
+                      MyFluroRouter.router
+                          .navigateTo(context, '/edit/$name/$id',
+                              routeSettings: RouteSettings(arguments: {
+                                "draftId": draftId,
+                                "projectName": name,
+                                "projectId": id,
+                              }));
+                    }
+                  },
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.adjust_rounded,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(
+                        width: 12,
+                      ),
+                      Text(
+                        name,
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 18),
+                      ),
+                    ],
+                  ),
                 ),
                 Positioned(
                     right: 24,
@@ -608,8 +643,11 @@ class _HomeState extends State<Home> {
                         ),
                       ),
                       child: InkWell(
-                        onTap: () async {
+                        onTap: () {
                           var cookie = Cookie.create();
+                          final accessToken = cookie.get("access_token");
+                          print(accessToken);
+                          _showSettingsDialog(context, accessToken!);
                           // cookie.remove('access_token');
                         },
                         child: const Padding(
@@ -658,8 +696,10 @@ class _HomeState extends State<Home> {
           setState(() {
             login = false;
           });
-          MyFluroRouter.router
-              .navigateTo(context, '/', clearStack: true, replace: true);
+          MyFluroRouter.router.navigateTo(
+            context,
+            '/',
+          );
         },
         child: const Padding(
           padding: EdgeInsets.symmetric(horizontal: 36, vertical: 8.0),

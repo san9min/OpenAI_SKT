@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:researchtool/api/email_login.dart';
 import 'package:researchtool/main.dart';
 import 'package:researchtool/screens/login.dart';
+import 'package:cookie_wrapper/cookie.dart';
 
 class EmailLoginScreen extends StatefulWidget {
   final String userEmail; // Add this variable to store user email
@@ -180,13 +181,19 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
             InkWell(
               onTap: () async {
                 wrongPassword = false;
-                String res = await EmailLogin.login(
+                final res = await EmailLogin.login(
                     widget.userEmail, passwordController.text);
-                print(res);
-                if (res == 'wrong password') {
+
+                if (res["message"] == 'wrong password') {
                   setState(() {
                     wrongPassword = true;
                   });
+                } else if (res["message"] == "login successed") {
+                  var cookie = Cookie.create();
+                  cookie.set('access_token', res["access_token"]);
+                  cookie.set('refresh_token', res["refresh_token"]);
+                  if (!mounted) return;
+                  MyFluroRouter.router.navigateTo(context, '/', replace: true);
                 }
               },
               child: Container(

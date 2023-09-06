@@ -57,7 +57,7 @@ class EmailSingUp {
     }
   }
 
-  static Future<String> registerEmail(String userEmail, String password) async {
+  static Future<Map> registerEmail(String userEmail, String password) async {
     try {
       var usermail = {"email": userEmail, "password": password};
 
@@ -65,12 +65,8 @@ class EmailSingUp {
           headers: {"Content-Type": "application/json"},
           body: json.encode(usermail));
       final res = json.decode(response.body);
-      print(res);
-      if (res["message"] == "user exists!") {
-        return "이미 존재하는 계정입니다.";
-      } else {
-        return "";
-      }
+
+      return res;
 
       // if (response.statusCode == 401) {
       //   final refreshResponse = await http.get(Uri.parse(refreshUrl));
@@ -83,7 +79,7 @@ class EmailSingUp {
     } catch (error) {
       //MyFluroRouter.navigatorKey.currentState?.pushNamed('/login');
       print(error);
-      return "Error";
+      return {};
     }
   }
 }

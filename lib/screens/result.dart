@@ -2,8 +2,9 @@ import 'package:cross_file/cross_file.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:researchtool/main.dart';
-
+import 'package:researchtool/model/dratf.dart';
 import 'package:footer/footer_view.dart';
 import 'package:footer/footer.dart';
 import 'package:researchtool/screens/datasource.dart';
@@ -11,7 +12,16 @@ import 'package:researchtool/screens/chat.dart';
 import 'package:researchtool/screens/draft.dart';
 
 class ResultScreen extends StatefulWidget {
-  const ResultScreen({super.key});
+  const ResultScreen(
+      {Key? key,
+      required this.draftId,
+      required this.projectName,
+      required this.projectId})
+      : super(key: key);
+
+  final int draftId;
+  final String projectName;
+  final int projectId;
 
   @override
   State<ResultScreen> createState() => _ResultScreenState();
@@ -25,7 +35,11 @@ class _ResultScreenState extends State<ResultScreen> {
   bool isTrained = false;
   int _uniqueIdCounter = 0; // 유니크한 ID를 위한 카운터
   int _uniqueIdYoutubeCounter = 0;
-  String projectName = "LLM Market";
+
+  //late
+  late String projectName;
+  late int draftId;
+
   //Data Source
   PlatformFile? _pickedFile;
   PlatformFile? _pickedImage;
@@ -38,11 +52,12 @@ class _ResultScreenState extends State<ResultScreen> {
 
   bool _dragging = false;
   bool _draggingImage = false;
-
+  late DraftModel _draftmodelProvider;
   @override
   void initState() {
     super.initState();
-
+    draftId = widget.draftId;
+    projectName = widget.projectName;
     indexFocus.addListener(() {
       if (indexFocus.hasFocus) {
         //포커스노드가 포커스를 가지고 있을 때
@@ -56,50 +71,8 @@ class _ResultScreenState extends State<ResultScreen> {
         });
       }
     });
-    Future.delayed(const Duration(seconds: 3), () {
-      setState(() {
-        isTrained = true;
-      });
-    });
-
-    indexController.text = '''
-서론
-- LLM 시장의 중요성과 영향력
-- 보고서의 목적과 범위,
-
- LLM 시장 개요
-- LLM의 정의와 개념
-- LLM 시장의 성장과 동향,
-
-LLM 시장의 주요 플레이어
-- 주요 LLM 제조업체 및 공급업체
-- 경쟁 구도와 시장 점유율,
-
-LLM 시장의 세분화
-- 제품 유형별 LLM 시장 동향
-- 지역별 LLM 시장 동향,
-
-LLM 시장의 주요 동향
-- 기술적 발전과 혁신
-- 시장 규모와 수요 예측,
-
-LLM 시장의 성장 촉진요인과 억제요인
-- 성장 촉진요인 분석
-- 억제요인 분석,
-
-LLM 시장의 기회와 도전
-- 시장 진입 전략과 기회 분석
-- 시장 도전 요인과 대응 전략,
-
-주요 국가별 LLM 시장 동향
-- 미국의 LLM 시장 동향
-- 중국의 LLM 시장 동향
-- 유럽의 LLM 시장 동향,
-
-결론
-- LLM 시장의 전망과 추이
-- 보고서의 요약 및 결론
-''';
+    _draftmodelProvider = Provider.of<DraftModel>(context, listen: false);
+    _draftmodelProvider.getDraftStatusforState(draftId);
   }
 
   Future<void> _pickFiles() async {
@@ -112,9 +85,7 @@ LLM 시장의 기회와 도전
       setState(() {
         _pickedFile = result.files.single;
       });
-    } else {
-      print('No file selected');
-    }
+    } else {}
   }
 
   Future<void> _pickImages() async {
@@ -127,15 +98,13 @@ LLM 시장의 기회와 도전
       setState(() {
         _pickedImage = result.files.single;
       });
-    } else {
-      print('No file selected');
-    }
+    } else {}
   }
 
   @override
   void dispose() {
-    // TODO: implement dispose
     textInputController.dispose();
+    indexController.dispose();
     for (var container in urlContainers) {
       container.controller.dispose(); // 컨트롤러 해제
     }
@@ -271,64 +240,66 @@ LLM 시장의 기회와 도전
             ],
           ),
         ),
-        body: FooterView(
-          footer: Footer(
-            padding: const EdgeInsets.all(5.0),
-            child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: <Widget>[
-                  Text(
-                    'Copyright © 2023 audrey. AI. All Rights Reserved.',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w300,
-                        fontSize: 12.0,
-                        color: Color(0xFF162A49)),
-                  ),
-                ]),
-          ),
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Row(
-                children: [
-                  InkWell(
-                    onTap: () {
-                      MyFluroRouter.router.navigateTo(context, "/");
-                    },
-                    child: const Image(
-                      height: 48,
-                      image: AssetImage('assets/images/logo.png'),
-                      fit: BoxFit.contain,
+        body: Consumer<DraftModel>(
+          builder: (context, provider, child) => FooterView(
+            footer: Footer(
+              padding: const EdgeInsets.all(5.0),
+              child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: <Widget>[
+                    Text(
+                      'Copyright © 2023 audrey. AI. All Rights Reserved.',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w300,
+                          fontSize: 12.0,
+                          color: Color(0xFF162A49)),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    projectName,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold),
-                  ),
+                  ]),
+            ),
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Row(
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        MyFluroRouter.router.navigateTo(context, "/");
+                      },
+                      child: const Image(
+                        height: 48,
+                        image: AssetImage('assets/images/logo.png'),
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      projectName,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  MediaQuery.of(context).size.width < 700
+                      ? Container()
+                      : SizedBox(width: 224, child: pageButtonLayout()),
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width > 700
+                        ? MediaQuery.of(context).size.width - 300
+                        : MediaQuery.of(context).size.width / 1,
+                    height: MediaQuery.of(context).size.height,
+                    child: mainPageView(),
+                  )
                 ],
               ),
-            ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                MediaQuery.of(context).size.width < 700
-                    ? Container()
-                    : SizedBox(width: 224, child: pageButtonLayout()),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width > 700
-                      ? MediaQuery.of(context).size.width - 300
-                      : MediaQuery.of(context).size.width / 1,
-                  height: MediaQuery.of(context).size.height,
-                  child: mainPageView(),
-                )
-              ],
-            ),
-          ],
+            ],
+          ),
         ));
   }
 
@@ -337,8 +308,6 @@ LLM 시장의 기회와 도전
         ? MediaQuery.of(context).size.height / 12
         : 50;
     return SizedBox(
-      // decoration: const BoxDecoration(
-      //     border: Border(top: BorderSide(color: Colors.blueGrey, width: 1))),
       height: MediaQuery.of(context).size.height - 128,
       child: Column(
         children: <Widget>[
@@ -348,7 +317,7 @@ LLM 시장의 기회와 도전
           const Text("Assistant State",
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 18,
+                fontSize: 14,
               )),
           const SizedBox(
             height: 12,
@@ -359,51 +328,64 @@ LLM 시장의 기회와 도전
             children: [
               const SizedBox(width: 12),
               Container(
-                  width: 96,
-                  height: 42,
+                  width: 84,
+                  height: 36,
                   decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                          color: isTrained
+                          color: _draftmodelProvider.isTrained
                               ? Colors.grey.shade400
                               : Colors.red.shade600)),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Icon(Icons.refresh,
-                          color: isTrained
-                              ? Colors.grey.shade400
-                              : Colors.red.shade600),
+                      _draftmodelProvider.isTrained
+                          ? Icon(Icons.refresh,
+                              size: 18, color: Colors.grey.shade400)
+                          : SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.red.shade600),
+                              ),
+                            ),
                       Text(
-                        " Training",
+                        "  Training",
                         style: TextStyle(
-                            color: isTrained
-                                ? Colors.grey.shade400
-                                : Colors.red.shade600),
+                          fontSize: 12,
+                          color: _draftmodelProvider.isTrained
+                              ? Colors.grey.shade400
+                              : Colors.red.shade600,
+                        ),
                       ),
                     ],
                   )),
               const SizedBox(width: 12),
               Container(
-                  width: 96,
-                  height: 42,
+                  width: 84,
+                  height: 36,
                   decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                          color: isTrained
+                          color: _draftmodelProvider.isTrained
                               ? Colors.lightGreen
                               : Colors.grey.shade400)),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Icon(Icons.check,
-                          color: isTrained
+                          size: 18,
+                          color: _draftmodelProvider.isTrained
                               ? Colors.lightGreen
                               : Colors.grey.shade400),
                       Text(
                         " Trained",
                         style: TextStyle(
-                            color: isTrained
+                            fontSize: 12,
+                            color: _draftmodelProvider.isTrained
                                 ? Colors.lightGreen
                                 : Colors.grey.shade400),
                       ),
@@ -493,52 +475,108 @@ LLM 시장의 기회와 도전
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (MediaQuery.of(context).size.width > 700)
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    width: 256,
-                    height: MediaQuery.of(context).size.height / 2,
-                    decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(8)),
-                    child: SingleChildScrollView(
-                        child: Column(children: [
-                      const Text("목차",
-                          textAlign: TextAlign.left,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                          )),
-                      TextField(
-                          focusNode: indexFocus,
-                          maxLines: null,
-                          controller: indexController,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor:
-                                indexEdit ? Colors.white : Colors.transparent,
-                            border: const OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Colors.transparent,
-                                width: 1.0,
+                  Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        width: 256,
+                        height: MediaQuery.of(context).size.height / 2,
+                        decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(8)),
+                        child: SingleChildScrollView(
+                            child: Column(children: [
+                          const Text("목차",
+                              textAlign: TextAlign.left,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                              )),
+                          TextField(
+                              focusNode: indexFocus,
+                              maxLines: null,
+                              controller: indexController,
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: indexEdit
+                                    ? Colors.white
+                                    : Colors.transparent,
+                                border: const OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: Colors.transparent,
+                                    width: 1.0,
+                                  ),
+                                ),
+                                focusedBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: Colors.transparent,
+                                    width: 1.0,
+                                  ),
+                                ),
+                                enabledBorder: const OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: Colors.transparent,
+                                    width: 1.0,
+                                  ),
+                                ),
                               ),
-                            ),
-                            focusedBorder: const OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Colors.transparent,
-                                width: 1.0,
-                              ),
-                            ),
-                            enabledBorder: const OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Colors.transparent,
-                                width: 1.0,
-                              ),
-                            ),
-                          ),
-                          cursorColor: Colors.grey.shade600,
-                          style: TextStyle(
-                              color: indexEdit ? Colors.black : Colors.white))
-                    ])),
+                              cursorColor: Colors.grey.shade600,
+                              style: TextStyle(
+                                  color:
+                                      indexEdit ? Colors.black : Colors.white))
+                        ])),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        width: 256,
+                        height: MediaQuery.of(context).size.height / 4,
+                        decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(8)),
+                        child: const SingleChildScrollView(
+                            child: Column(children: [
+                          Text("출처",
+                              textAlign: TextAlign.left,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                              )),
+                          // TextField(
+                          //     focusNode: indexFocus,
+                          //     maxLines: null,
+                          //     controller: indexController,
+                          //     decoration: InputDecoration(
+                          //       filled: true,
+                          //       fillColor: indexEdit
+                          //           ? Colors.white
+                          //           : Colors.transparent,
+                          //       border: const OutlineInputBorder(
+                          //         borderSide: BorderSide(
+                          //           color: Colors.transparent,
+                          //           width: 1.0,
+                          //         ),
+                          //       ),
+                          //       focusedBorder: const OutlineInputBorder(
+                          //         borderSide: BorderSide(
+                          //           color: Colors.transparent,
+                          //           width: 1.0,
+                          //         ),
+                          //       ),
+                          //       enabledBorder: const OutlineInputBorder(
+                          //         borderSide: BorderSide(
+                          //           color: Colors.transparent,
+                          //           width: 1.0,
+                          //         ),
+                          //       ),
+                          //     ),
+                          //     cursorColor: Colors.grey.shade600,
+                          //     style: TextStyle(
+                          //         color:
+                          //             indexEdit ? Colors.black : Colors.white))
+                        ])),
+                      ),
+                    ],
                   ),
                 const SizedBox(width: 12),
                 Column(
@@ -559,7 +597,9 @@ LLM 시장의 기회와 도전
                                   : MediaQuery.of(context).size.width -
                                       MediaQuery.of(context).size.width / 10,
                               height: MediaQuery.of(context).size.height,
-                              child: const Draft(),
+                              child: Draft(
+                                  draft: _draftmodelProvider.draft,
+                                  isTrained: _draftmodelProvider.isTrained),
                             ),
                           ),
                         ],
@@ -1203,7 +1243,7 @@ LLM 시장의 기회와 도전
                         child: ListView.separated(
                           separatorBuilder: (context, index) =>
                               const SizedBox(height: 12),
-                          itemCount: 1, //informationList.length,
+                          itemCount: 0,
                           itemBuilder: (context, index) {
                             return InkWell(
                               onTap: () {},

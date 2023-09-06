@@ -1,19 +1,26 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:footer/footer.dart';
 import 'package:footer/footer_view.dart';
+import 'package:researchtool/api/project.dart';
 import 'package:researchtool/main.dart';
 import 'package:researchtool/screens/create.dart';
 
 class DataSourceScreen extends StatefulWidget {
   const DataSourceScreen(
-      {Key? key, required this.selectedUrls, required this.projectName})
+      {Key? key,
+      required this.selectedUrls,
+      required this.projectName,
+      required this.projectId})
       : super(key: key);
 
   final List<Information> selectedUrls;
   final String projectName;
+  final int projectId;
   @override
   State<DataSourceScreen> createState() => _DataSourceScreenState();
 }
@@ -25,7 +32,8 @@ class _DataSourceScreenState extends State<DataSourceScreen>
 
   ScrollController scrollController = ScrollController();
   PageController pageController = PageController(initialPage: 0);
-  late List<Information> suggested_links;
+  late List<Information> suggestedLinks;
+  late int projectId;
   final double sliverMinHeight = 80.0, sliverMaxHeight = 140.0;
   int pageIndex = 0;
 
@@ -40,9 +48,8 @@ class _DataSourceScreenState extends State<DataSourceScreen>
   @override
   void initState() {
     super.initState();
-    suggested_links = widget.selectedUrls;
-    // _uniqueIdCounter = urlContainers.length;
-    // _uniqueIdYoutubeCounter = youtubeLinksContainers.length;
+    suggestedLinks = widget.selectedUrls;
+    projectId = widget.projectId;
   }
 
   Future<void> _pickFiles() async {
@@ -145,7 +152,7 @@ class _DataSourceScreenState extends State<DataSourceScreen>
                     child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    if (suggested_links.isNotEmpty)
+                    if (suggestedLinks.isNotEmpty)
                       const Text(
                         "Suggested Data",
                         style: TextStyle(
@@ -154,7 +161,7 @@ class _DataSourceScreenState extends State<DataSourceScreen>
                             fontSize: 18),
                       ),
                     const SizedBox(height: 12),
-                    if (suggested_links.isNotEmpty)
+                    if (suggestedLinks.isNotEmpty)
                       Padding(
                         padding: EdgeInsets.symmetric(
                           horizontal: MediaQuery.of(context).size.width / 12,
@@ -171,7 +178,7 @@ class _DataSourceScreenState extends State<DataSourceScreen>
                                     mainAxisSpacing: 12,
                                     mainAxisExtent: 36,
                                     crossAxisSpacing: 12),
-                            itemCount: suggested_links.length,
+                            itemCount: suggestedLinks.length,
                             itemBuilder: (context, index) {
                               return Container(
                                   decoration: BoxDecoration(
@@ -186,14 +193,14 @@ class _DataSourceScreenState extends State<DataSourceScreen>
                                     children: [
                                       const SizedBox(width: 12),
                                       Image.network(
-                                        suggested_links[index].favicon_url,
+                                        suggestedLinks[index].favicon_url,
                                         width: 24,
                                       ),
                                       const SizedBox(width: 12),
                                       SizedBox(
                                         width: 128,
                                         child: Text(
-                                          suggested_links[index].url,
+                                          suggestedLinks[index].url,
                                           style: const TextStyle(
                                             color: Colors.grey,
                                             overflow: TextOverflow.ellipsis,
@@ -256,16 +263,36 @@ class _DataSourceScreenState extends State<DataSourceScreen>
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Center(
             child: InkWell(
-              onTap: () {
+              onTap: () async {
+                List<int> suggestionSelection = [];
                 List<String> webPages = [];
-                List<String> files = [];
-                List<String> text = [];
-                List<String> images = [];
+                List<PlatformFile?> files = [_pickedFile];
+                List<String> text = textInputController.text.isEmpty
+                    ? []
+                    : [textInputController.text];
+                List<PlatformFile?> image = [_pickedImage];
                 List<String> youtube = [];
-                for (final container in urlContainers) {
-                  print(container.controller.text);
+                for (final suggestion_link in suggestedLinks) {
+                  suggestionSelection.add(suggestion_link.id);
                 }
-                MyFluroRouter.router.navigateTo(context, '/result');
+                for (final container in urlContainers) {
+                  webPages.add(container.controller.text);
+                }
+                for (final container in youtubeLinksContainers) {
+                  youtube.add(container.controller.text);
+                }
+                final res = await ProjectAPI.draftFirstCreate(projectId,
+                    suggestionSelection, webPages, files, text, image, youtube);
+                int draftId = res["draft_id"];
+
+                if (!mounted) return;
+                MyFluroRouter.router.navigateTo(context,
+                    '/edit/${utf8.encode(widget.projectName)}/$projectId',
+                    routeSettings: RouteSettings(arguments: {
+                      "draftId": draftId,
+                      "projectName": widget.projectName,
+                      "projectId": projectId
+                    }));
               },
               child: Container(
                 padding: EdgeInsets.symmetric(
@@ -550,9 +577,10 @@ class _DataSourceScreenState extends State<DataSourceScreen>
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8)),
                 child: TextField(
-                  maxLines: null,
+                  maxLines: 200,
                   controller: textInputController,
                   cursorColor: Colors.grey,
+                  keyboardType: TextInputType.multiline,
                   decoration: InputDecoration(
                     //floatingLabelBehavior: FloatingLabelBehavior.always,
                     hintText: "Text를 입력해주세요",
@@ -876,8 +904,4 @@ class _UrlContainerState extends State<UrlContainer> {
       ],
     );
   }
-}
-
-Widget SuggestionUI() {
-  return Container();
 }

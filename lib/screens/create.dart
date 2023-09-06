@@ -24,6 +24,8 @@ class _BuildScreenState extends State<BuildScreen>
   bool indexRender = false;
   String projectName = "";
   late int projectId;
+  bool selectedInformationListisEmpty = false;
+  bool isAllSelected = false;
   @override
   void initState() {
     super.initState();
@@ -71,7 +73,7 @@ class _BuildScreenState extends State<BuildScreen>
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: <Widget>[
                   Text(
-                    'Copyright © 2023 audrey. AI. All Rights Reserved.',
+                    'Copyright © 2023 audrey.AI. All Rights Reserved.',
                     style: TextStyle(
                         fontWeight: FontWeight.w300,
                         fontSize: 12.0,
@@ -96,7 +98,7 @@ class _BuildScreenState extends State<BuildScreen>
                       const Text(
                         "Suggestion",
                         style: TextStyle(
-                            color: Colors.cyan,
+                            color: Colors.lightBlue,
                             fontSize: 18,
                             fontWeight: FontWeight.bold),
                       ),
@@ -106,8 +108,37 @@ class _BuildScreenState extends State<BuildScreen>
                       const Text(
                           "다음과 같이 자료를 찾아봤어요!\n 원하시는 자료를 선택해주시면 선택하신 자료를 Assistant가 학습해 보고서 작성을 도와드려요",
                           textAlign: TextAlign.center,
-                          style:
-                              TextStyle(color: Colors.white70, fontSize: 14)),
+                          style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400)),
+                      const SizedBox(
+                        height: 12,
+                      ),
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width / 1.5,
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              checkColor: Colors.white,
+                              activeColor: Colors.cyan,
+                              value: isAllSelected,
+                              onChanged: (value) {
+                                setState(() {
+                                  isAllSelected = !isAllSelected;
+                                  for (var item in informationList) {
+                                    item.isSelected = isAllSelected;
+                                  }
+                                });
+                              },
+                            ),
+                            Text(
+                              isAllSelected ? '전체 해제' : '전체 선택',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
                       const SizedBox(
                         height: 12,
                       ),
@@ -347,6 +378,24 @@ class _BuildScreenState extends State<BuildScreen>
                                     },
                                   )),
                       ),
+                      if (selectedInformationListisEmpty)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 8.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.warning_amber_rounded,
+                                  color: Colors.red),
+                              SizedBox(width: 12),
+                              Text("하나 이상의 자료를 선택해주세요!",
+                                  style: TextStyle(color: Colors.red)),
+                            ],
+                          ),
+                        ),
+                      const SizedBox(
+                        height: 12,
+                      ),
                       CreateButton(),
                     ],
                   )
@@ -367,14 +416,15 @@ class _BuildScreenState extends State<BuildScreen>
                                 children: [
                                   const Text("Project Name",
                                       style: TextStyle(
-                                          color: Colors.cyan,
+                                          color: Colors.blueAccent,
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold)),
-                                  const SizedBox(height: 8),
+                                  const SizedBox(height: 12),
                                   const Text("프로젝트 이름을 정해주세요",
                                       style: TextStyle(
-                                          color: Colors.white70, fontSize: 14)),
-                                  const SizedBox(height: 8),
+                                          color: Colors.grey,
+                                          fontWeight: FontWeight.w400)),
+                                  const SizedBox(height: 12),
                                   TextField(
                                     controller: projectNameController,
                                     cursorColor: Colors.grey.shade600,
@@ -398,7 +448,7 @@ class _BuildScreenState extends State<BuildScreen>
                                     ),
                                   ),
                                   const SizedBox(
-                                    height: 12,
+                                    height: 24,
                                   )
                                 ],
                               ),
@@ -419,7 +469,7 @@ class _BuildScreenState extends State<BuildScreen>
                                     children: [
                                       JumpingDots(
                                         numberOfDots: 3,
-                                        color: Colors.cyan,
+                                        color: Colors.blue,
                                         animationDuration:
                                             const Duration(milliseconds: 500),
                                       ),
@@ -432,7 +482,6 @@ class _BuildScreenState extends State<BuildScreen>
                                             : "목차를 생성 중입니다...",
                                         style: const TextStyle(
                                             color: Colors.grey,
-                                            fontSize: 18,
                                             fontWeight: FontWeight.w600),
                                       ),
                                     ],
@@ -446,19 +495,20 @@ class _BuildScreenState extends State<BuildScreen>
                                             ? "Table of Contents"
                                             : "Topic | Purpose",
                                         style: const TextStyle(
-                                            color: Colors.cyan,
+                                            color: Colors.blueAccent,
                                             fontSize: 18,
                                             fontWeight: FontWeight.bold),
                                       ),
-                                      const SizedBox(height: 8),
+                                      const SizedBox(height: 12),
                                       Text(
                                           indexRender
                                               ? "다음과 같이 목차를 작성해봤어요.\n목차를 기준으로 관련 자료를 수집하고 초안을 작성해요! 필요하신 경우 수정해주세요"
-                                              : "해당 프로젝트의 주제/ 목적을 알려주세요. \nAssistant가 목차와 관련 자료를 찾아드려요!",
+                                              : "해당 프로젝트의 주제/ 목적을 알려주세요. \nAssistant가 목차를 작성하고 관련 자료를 찾아드려요",
                                           style: const TextStyle(
-                                              color: Colors.white70,
-                                              fontSize: 14)),
-                                      const SizedBox(height: 8),
+                                            color: Colors.grey,
+                                            fontWeight: FontWeight.w400,
+                                          )),
+                                      const SizedBox(height: 12),
                                       Container(
                                         decoration: BoxDecoration(
                                           borderRadius:
@@ -470,15 +520,16 @@ class _BuildScreenState extends State<BuildScreen>
                                                 2.5,
                                         child: TextField(
                                           controller: purposeController,
-                                          maxLines: null,
+                                          maxLines: indexRender ? null : 10,
                                           focusNode: purposeFocus,
+                                          keyboardType: TextInputType.multiline,
                                           decoration: InputDecoration(
                                             //floatingLabelBehavior: FloatingLabelBehavior.always,
                                             labelText:
                                                 indexRender ? "목차" : "Purpose",
                                             labelStyle: TextStyle(
                                               color: purposeFocus.hasFocus
-                                                  ? Colors.lightBlueAccent
+                                                  ? Colors.blue
                                                   : Colors.grey,
                                             ),
 
@@ -538,13 +589,19 @@ class _BuildScreenState extends State<BuildScreen>
             if (getSuggestion) {
               List<Information> selectedInformationList =
                   informationList.where((info) => info.isSelected).toList();
-
-              MyFluroRouter.router.navigateTo(
-                  context, "/add/data/$projectName/manual",
-                  routeSettings: RouteSettings(arguments: {
-                    "selectedInformationList": selectedInformationList,
-                    "projectName": projectName
-                  }));
+              if (selectedInformationList.isEmpty) {
+                setState(() {
+                  selectedInformationListisEmpty = true;
+                });
+              } else {
+                MyFluroRouter.router.navigateTo(
+                    context, "/add/data/$projectName/$projectId/manual",
+                    routeSettings: RouteSettings(arguments: {
+                      "selectedInformationList": selectedInformationList,
+                      "projectName": projectName,
+                      "projectId": projectId
+                    }));
+              }
             } else if (projectNameController.text.isNotEmpty &&
                 purposeController.text.isNotEmpty &&
                 !indexRender) {
@@ -566,6 +623,7 @@ class _BuildScreenState extends State<BuildScreen>
               setState(() {
                 isLoading = true;
               });
+
               ProjectAPI.postSuggestion(projectId, purposeController.text);
               final suggestionResponse =
                   await ProjectAPI.getSuggestion(projectId);
@@ -582,6 +640,7 @@ class _BuildScreenState extends State<BuildScreen>
                           item['description'],
                           item['link'],
                           "https://www.gstatic.com/youtube/img/branding/favicon/favicon_144x144.png",
+                          item['id'],
                           false,
                           false));
                     }
@@ -597,6 +656,7 @@ class _BuildScreenState extends State<BuildScreen>
                           item['description'],
                           item['link'],
                           "https://www.google.com/favicon.ico",
+                          item['id'],
                           false,
                           false));
                     }
@@ -612,6 +672,7 @@ class _BuildScreenState extends State<BuildScreen>
                           item['description'],
                           item['link'],
                           "https://kostat.go.kr/img/logo/favicon.png",
+                          item['id'],
                           false,
                           false));
                     }
@@ -627,6 +688,22 @@ class _BuildScreenState extends State<BuildScreen>
                           item['description'],
                           item['link'],
                           "https://www.naver.com/favicon.ico?1",
+                          item['id'],
+                          false,
+                          false));
+                    }
+
+                    break;
+                  case 'gallup':
+                    List<dynamic> gallupData = suggestionResponse['gallup'];
+                    for (var item in gallupData) {
+                      informationList.add(Information(
+                          'gallup',
+                          item['title'],
+                          item['description'],
+                          item['link'],
+                          "https://www.naver.com/favicon.ico?1",
+                          item['id'],
                           false,
                           false));
                     }
@@ -649,22 +726,26 @@ class _BuildScreenState extends State<BuildScreen>
           child: Container(
             padding: EdgeInsets.symmetric(
               vertical: MediaQuery.of(context).size.height / 64,
-              horizontal: MediaQuery.of(context).size.width / 16,
+              horizontal: MediaQuery.of(context).size.width / 24, //16,
             ),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               gradient: const LinearGradient(
                 colors: [
                   Colors.indigo,
-                  Colors.cyan,
+                  Colors.blue,
                 ], // 그라데이션 색상 설정
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
             ),
-            child: const Text(
-              "Continue",
-              style: TextStyle(
+            child: Text(
+              getSuggestion
+                  ? "Add Reference"
+                  : indexRender
+                      ? "Search Reference"
+                      : "Continue",
+              style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.w600),
@@ -682,10 +763,10 @@ class Information {
   final String content;
   final String favicon_url;
   final String url;
-
+  int id;
   bool isSelected;
   bool isExpanded;
 
   Information(this.source, this.title, this.content, this.url, this.favicon_url,
-      this.isSelected, this.isExpanded);
+      this.id, this.isSelected, this.isExpanded);
 }
