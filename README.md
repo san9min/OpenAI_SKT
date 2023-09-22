@@ -14,7 +14,7 @@
 
 We are developing an AI-powered online research tool aimed at streamlining repetitive and time-consuming tasks in online data research. Our goal is to enable individuals to focus on more important tasks by harnessing the capabilities of generative AI technology.
 
-We plan to start by collecting data from reputable sources such as **[통계청](https://kostat.go.kr)** and **[정책 브리핑](http://www.korea.kr)**, and then establish partnerships with other data-rich websites to expand our dataset. This will allow us to provide valuable and reliable information for research purposes.
+We plan to start by collecting data from trusted sources such as **[통계청](https://kostat.go.kr)** and **[정책 브리핑](http://www.korea.kr)**, and then establish partnerships with other data-rich websites to expand our vector database. This will allow us to provide valuable and reliable information for research purposes.
 
 Our tool will be versatile, capable of handling a wide range of data formats, including web pages, PDF documents, YouTube videos, and even audio content. This flexibility ensures that users can extract information from diverse sources efficiently.
 
@@ -27,20 +27,54 @@ In summary, our AI-powered online research tool aims to enhance the productivity
 
 ## Agent
 <br>
-<p align="center"><a href="https://audrey.kr/"><img width=60% src="https://github.com/san9min/OpenAI_SKT/assets/92682815/6b4c3dc5-8cb1-46aa-8f67-16251578e53d" alt="logo"></a></p>
+<p align="center"><a href="https://audrey.kr/"><img width=60% src="https://github.com/san9min/OpenAI_SKT/assets/92682815/6b4c3dc5-8cb1-46aa-8f67-16251578e53d" alt="agent"></a></p>
 
 
 
 
 ## Chunking Strategy
-![audrey AI_본선](https://github.com/san9min/OpenAI_SKT/assets/92682815/d3805e72-64a9-4571-a64e-29ac4b73b897)
+<p align="center"><img width=80% src="https://github.com/san9min/OpenAI_SKT/assets/92682815/d3805e72-64a9-4571-a64e-29ac4b73b897" alt="chunking"></p>
+We conducted extensive preprocessing to ensure that GPT could better understand the data. This involved removing noise information and incorporating visual data to comprehend context and structural details.
 
 
+We obtained official authorization and fine-tuned Faster RCNN on a dataset comprising 200 images from the **통계청 (Korean Statistical Office)** and **정부 브리핑 (Government Briefings)**. 
+Through this process, we are able to divide each chunk into the following categories by utilizing the information
+
+| Category            | Description                                                         |
+|:---------------------:|:---------------------------------------------------------------------:|
+| Topic               | Identifying the central subject or theme of the content.          |
+| Title               | Recognizing and understanding the document or presentation's title. |
+| Contents            | Grasping the textual information within the document or presentation. |
+| Figure              | Identifying visual elements such as images or illustrations.       |
+| Graph               | Recognizing and interpreting graphical representations of data.    |
+| Table               | Understanding tabular data structures.                             |
+| Table Caption       | Recognizing and comprehending captions associated with tables.     |
+| Comment             | Identifying and understanding comments or annotations within the content. |
+
+This comprehensive preprocessing and fine-tuning approach enhances GPT's ability to process and categorize information effectively, making it more proficient in analyzing textual and visual data in a structured manner.
+
+
+
+
+
+## Backend Structure
+<p align="center"><img width=80% src="https://github.com/san9min/OpenAI_SKT/assets/92682815/f17c88da-661b-4b9b-9d41-7dd346e139e6" alt="backend"></a></p>
 
 
 
 
 ## Citations
+
+```bibtex
+@misc{embedchain,
+  author = {Taranjeet Singh},
+  title = {Embedchain: Framework to easily create LLM powered bots over any dataset},
+  year = {2023},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/embedchain/embedchain}},
+}
+```
 
 ```bibtex
 @article{shen2021layoutparser,
@@ -50,7 +84,7 @@ In summary, our AI-powered online research tool aims to enhance the productivity
   year={2021}
 }
 ```
-<br><hr>
+
 
 <!-- FOOTER START -->
 <p align="center"><a href="#">
