@@ -1,16 +1,18 @@
-# OPENAI X SKT
+<br>
+<p align="center"><a href="https://audrey.kr/"><img width=100% src="https://github.com/san9min/OpenAI_SKT/assets/92682815/f5c8d072-94ef-4816-8a45-0319d1780671" alt="logo"></a></p>
+<h4 align="center">
+ <a href="https://github.com/san9min/OpenAI_SKT">AI</a> &nbsp;&nbsp; | &nbsp;&nbsp; <a href="">Frontend</a> &nbsp;&nbsp; | &nbsp;&nbsp; <a href="https://github.com/audreyaiai/OpenAI_SKT_BE">Backend</a>
+</h4>
+<br>
 
-A new Flutter project.
 
-## Getting Started
 
-This project is a starting point for a Flutter application.
+# audrey.ai
 
-A few resources to get you started if this is your first Flutter project:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+<!-- FOOTER START -->
+<p align="center"><a href="#">
+    <img width="100%" height="100%" src="https://capsule-render.vercel.app/api?type=waving&color=0:1167b1,100:03254c&height=180&section=footer&animation=fadeIn&fontAlignY=40" alt="header" />
+</a></p>
+<!-- FOOTER END -->
