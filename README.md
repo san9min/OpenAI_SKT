@@ -10,6 +10,15 @@
 
 # audrey.ai
 
+<h3 align="center"><br>✨&nbsp; TEAM&nbsp; ✨<br><br></h3>
+<p align="center">
+<b>🚀 <a href="https://github.com/san9min">Sangmin Lee</a></b> <br>
+<b>🐋 <a href="https://github.com/SUNGBEOMCHOI">Sungbeom Choi</a></b> <br>
+<b>🦄 <a href="https://github.com/devch1013">ChanHyuk Park</a></b> <br>
+<b>🌟 <a href="https://github.com/0601p">Minsu Park</a></b> <br>
+<br><br>
+<hr>
+ 
 **[Demo Page](https://audrey.kr/)**  
 
 We are developing an AI-powered online research tool aimed at streamlining repetitive and time-consuming tasks in online data research. Our goal is to enable individuals to focus on more important tasks by harnessing the capabilities of generative AI technology.
