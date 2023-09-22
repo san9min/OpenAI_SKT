@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
@@ -8,7 +6,10 @@ import 'package:footer/footer.dart';
 import 'package:footer/footer_view.dart';
 import 'package:researchtool/api/project.dart';
 import 'package:researchtool/main.dart';
+import 'package:researchtool/model/data.dart';
 import 'package:researchtool/screens/create.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class DataSourceScreen extends StatefulWidget {
   const DataSourceScreen(
@@ -29,7 +30,8 @@ class _DataSourceScreenState extends State<DataSourceScreen>
     with SingleTickerProviderStateMixin {
   bool _dragging = false;
   bool _draggingImage = false;
-
+  bool _draggingAudio = false;
+  bool generation = false;
   ScrollController scrollController = ScrollController();
   PageController pageController = PageController(initialPage: 0);
   late List<Information> suggestedLinks;
@@ -39,9 +41,13 @@ class _DataSourceScreenState extends State<DataSourceScreen>
 
   int _uniqueIdCounter = 0; // 유니크한 ID를 위한 카터
   int _uniqueIdYoutubeCounter = 0;
+  int _uniqueIdFileCounter = 0;
+  int _uniqueIdImageCounter = 0;
   //Data Source
-  PlatformFile? _pickedFile;
-  PlatformFile? _pickedImage;
+
+  final List<FileData> _pickedFiles = [];
+  final List<FileData> _pickedImages = [];
+  PlatformFile? _pickedAudio;
   TextEditingController textInputController = TextEditingController();
   List<UrlContainer> urlContainers = [];
   List<UrlContainer> youtubeLinksContainers = [];
@@ -56,11 +62,32 @@ class _DataSourceScreenState extends State<DataSourceScreen>
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf'],
+      allowMultiple: true,
+    );
+
+    if (result != null) {
+      for (final file in result.files) {
+        setState(() {
+          _pickedFiles.add(FileData(
+              fileListId: _uniqueIdFileCounter, serverId: -1, contents: file));
+        });
+        _uniqueIdFileCounter++;
+      }
+    } else {
+      print('No file selected');
+    }
+  }
+
+  Future<void> _pickAudio() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['mp3'],
+      allowMultiple: false,
     );
 
     if (result != null) {
       setState(() {
-        _pickedFile = result.files.single;
+        _pickedAudio = result.files.single;
       });
     } else {
       print('No file selected');
@@ -71,12 +98,17 @@ class _DataSourceScreenState extends State<DataSourceScreen>
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['jpg', 'png'],
+      allowMultiple: true,
     );
 
     if (result != null) {
-      setState(() {
-        _pickedImage = result.files.single;
-      });
+      for (final file in result.files) {
+        setState(() {
+          _pickedImages.add(FileData(
+              fileListId: _uniqueIdImageCounter, serverId: -1, contents: file));
+        });
+        _uniqueIdImageCounter++;
+      }
     } else {
       print('No file selected');
     }
@@ -117,17 +149,18 @@ class _DataSourceScreenState extends State<DataSourceScreen>
         ),
         body: FooterView(
           footer: Footer(
+            backgroundColor: const Color.fromARGB(255, 81, 85, 91),
             padding: const EdgeInsets.all(5.0),
             child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: <Widget>[
                   Text(
-                    'Copyright © 2023 audrey. AI. All Rights Reserved.',
+                    'Copyright © 2023 audrey.AI. All Rights Reserved.',
                     style: TextStyle(
                         fontWeight: FontWeight.w300,
                         fontSize: 12.0,
-                        color: Color(0xFF162A49)),
+                        color: Colors.white),
                   ),
                 ]),
           ),
@@ -138,7 +171,7 @@ class _DataSourceScreenState extends State<DataSourceScreen>
                 widget.projectName,
                 style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 28,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold),
               ),
             ),
@@ -148,107 +181,141 @@ class _DataSourceScreenState extends State<DataSourceScreen>
                         ? MediaQuery.of(context).size.width / 12
                         : 12,
                     vertical: 24),
-                child: Center(
-                    child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (suggestedLinks.isNotEmpty)
-                      const Text(
-                        "Suggested Data",
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18),
-                      ),
-                    const SizedBox(height: 12),
-                    if (suggestedLinks.isNotEmpty)
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: MediaQuery.of(context).size.width / 12,
-                        ),
+                child: generation
+                    ? Center(
                         child: SizedBox(
-                          height: 96,
-                          child: GridView.builder(
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount:
-                                        MediaQuery.of(context).size.width > 1000
-                                            ? 4
-                                            : 2, // 한 줄에 세 개의 열
-                                    mainAxisSpacing: 12,
-                                    mainAxisExtent: 36,
-                                    crossAxisSpacing: 12),
-                            itemCount: suggestedLinks.length,
-                            itemBuilder: (context, index) {
-                              return Container(
-                                  decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: Colors.grey)),
-                                  height: 36,
-                                  constraints:
-                                      const BoxConstraints(maxHeight: 36),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      const SizedBox(width: 12),
-                                      Image.network(
-                                        suggestedLinks[index].favicon_url,
-                                        width: 24,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      SizedBox(
-                                        width: 128,
-                                        child: Text(
-                                          suggestedLinks[index].url,
-                                          style: const TextStyle(
-                                            color: Colors.grey,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      )
-                                    ],
-                                  ));
-                            },
+                          height: MediaQuery.of(context).size.height / 1.5,
+                          child: const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SpinKitFadingCircle(size: 36, color: Colors.blue)
+                            ],
                           ),
                         ),
-                      ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      "Add Data Sources",
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18),
-                    ),
-                    const SizedBox(
-                      height: 24,
-                    ),
-                    const Text(
-                        "Assistant가 학습할 자료를 추가해주세요!\n추가하신 자료를 학습해 더 정확한 작성을 도와드려요.",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white70, fontSize: 14)),
-                    const SizedBox(
-                      height: 12,
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: MediaQuery.of(context).size.width / 12),
-                      child: pageButtonLayout(),
-                    ),
-                    SizedBox(
-                      height: MediaQuery.of(context).size.height / 2,
-                      child: dataPageView(),
-                    ),
-                    const SizedBox(
-                      height: 12,
-                    ),
-                    CreateButton(),
-                    const SizedBox(
-                      height: 12,
-                    ),
-                  ],
-                ))),
+                      )
+                    : Center(
+                        child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (suggestedLinks.isNotEmpty)
+                            const Text(
+                              "Selected References ✓",
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 20),
+                            ),
+                          const SizedBox(height: 12),
+                          if (suggestedLinks.isNotEmpty)
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal:
+                                    MediaQuery.of(context).size.width / 12,
+                              ),
+                              child: SizedBox(
+                                height: 96,
+                                child: GridView.builder(
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: MediaQuery.of(context)
+                                                      .size
+                                                      .width >
+                                                  1000
+                                              ? 4
+                                              : 2, // 한 줄에 세 개의 열
+                                          mainAxisSpacing: 12,
+                                          mainAxisExtent: 36,
+                                          crossAxisSpacing: 12),
+                                  itemCount: suggestedLinks.length,
+                                  itemBuilder: (context, index) {
+                                    return InkWell(
+                                      onTap: () async {
+                                        final url = suggestedLinks[index].url;
+                                        if (await canLaunchUrl(
+                                            Uri.parse(url))) {
+                                          await launchUrl(
+                                              Uri.parse(url)); // URL을 엽니다.
+                                        } else {
+                                          throw 'Could not launch $url';
+                                        }
+                                      },
+                                      child: Container(
+                                          decoration: BoxDecoration(
+                                            color: const Color.fromARGB(
+                                                255, 46, 50, 52),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          height: 36,
+                                          constraints: const BoxConstraints(
+                                              maxHeight: 36),
+                                          child: Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
+                                            children: [
+                                              const SizedBox(width: 12),
+                                              Image.network(
+                                                suggestedLinks[index]
+                                                    .favicon_url,
+                                                width: 24,
+                                              ),
+                                              const SizedBox(width: 12),
+                                              SizedBox(
+                                                width: 128,
+                                                child: Text(
+                                                  suggestedLinks[index].url,
+                                                  style: const TextStyle(
+                                                    color: Colors.grey,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              )
+                                            ],
+                                          )),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            "Add References +",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 20),
+                          ),
+                          const SizedBox(
+                            height: 24,
+                          ),
+                          const Text(
+                              "Agent가 학습할 자료를 추가해주세요!\n추가하신 자료를 학습해 더 정확한 작성을 도와드려요.",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  color: Colors.white70, fontSize: 14)),
+                          const SizedBox(
+                            height: 12,
+                          ),
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal:
+                                    MediaQuery.of(context).size.width / 12),
+                            child: pageButtonLayout(),
+                          ),
+                          SizedBox(
+                            height: MediaQuery.of(context).size.height / 2,
+                            child: dataPageView(),
+                          ),
+                          const SizedBox(
+                            height: 12,
+                          ),
+                          CreateButton(),
+                          const SizedBox(
+                            height: 12,
+                          ),
+                        ],
+                      ))),
           ],
         ));
   }
@@ -264,35 +331,42 @@ class _DataSourceScreenState extends State<DataSourceScreen>
           Center(
             child: InkWell(
               onTap: () async {
-                List<int> suggestionSelection = [];
+                setState(() {
+                  generation = true;
+                });
                 List<String> webPages = [];
-                List<PlatformFile?> files = [_pickedFile];
+                List<PlatformFile?> files = [];
                 List<String> text = textInputController.text.isEmpty
                     ? []
                     : [textInputController.text];
-                List<PlatformFile?> image = [_pickedImage];
+                List<PlatformFile?> image = [];
                 List<String> youtube = [];
-                for (final suggestion_link in suggestedLinks) {
-                  suggestionSelection.add(suggestion_link.id);
-                }
+                List<PlatformFile?> audio = [];
+
                 for (final container in urlContainers) {
                   webPages.add(container.controller.text);
                 }
                 for (final container in youtubeLinksContainers) {
                   youtube.add(container.controller.text);
                 }
-                final res = await ProjectAPI.draftFirstCreate(projectId,
-                    suggestionSelection, webPages, files, text, image, youtube);
-                int draftId = res["draft_id"];
 
+                for (final pickedFile in _pickedFiles) {
+                  files.add(pickedFile.contents);
+                }
+
+                for (final pickedImage in _pickedImages) {
+                  image.add(pickedImage.contents);
+                }
+                if (_pickedAudio != null) {
+                  audio.add(_pickedAudio);
+                }
+                await ProjectAPI.addDataSource(
+                    projectId, webPages, files, text, image, youtube, audio);
                 if (!mounted) return;
-                MyFluroRouter.router.navigateTo(context,
-                    '/edit/${utf8.encode(widget.projectName)}/$projectId',
-                    routeSettings: RouteSettings(arguments: {
-                      "draftId": draftId,
-                      "projectName": widget.projectName,
-                      "projectId": projectId
-                    }));
+                MyFluroRouter.router.navigateTo(
+                  context,
+                  '/edit/${Uri.encodeFull(widget.projectName)}/$projectId/0',
+                );
               },
               child: Container(
                 padding: EdgeInsets.symmetric(
@@ -304,7 +378,7 @@ class _DataSourceScreenState extends State<DataSourceScreen>
                   gradient: const LinearGradient(
                     colors: [
                       Colors.indigo,
-                      Colors.cyan,
+                      Colors.lightBlue,
                     ], // 그라데이션 색상 설정
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -335,14 +409,16 @@ class _DataSourceScreenState extends State<DataSourceScreen>
           Expanded(child: pageButton("Text", 2)),
           Expanded(child: pageButton("Images", 3)),
           Expanded(child: pageButton("Youtube", 4)),
+          Expanded(child: pageButton("Audio", 5)),
         ],
       ),
     );
   }
 
   Widget pageButton(String title, int page) {
-    final fontColor = pageIndex == page ? Colors.cyan : const Color(0xFF9E9E9E);
-    final lineColor = pageIndex == page ? Colors.cyan : Colors.transparent;
+    final fontColor =
+        pageIndex == page ? Colors.lightBlue : const Color(0xFF9E9E9E);
+    final lineColor = pageIndex == page ? Colors.lightBlue : Colors.transparent;
 
     return InkWell(
       splashColor: const Color(0xFF204D7E),
@@ -374,7 +450,7 @@ class _DataSourceScreenState extends State<DataSourceScreen>
     setState(() {
       pageIndex = page;
       pageController.animateToPage(pageIndex,
-          duration: const Duration(milliseconds: 700),
+          duration: const Duration(milliseconds: 500),
           curve: Curves.easeOutCirc);
     });
   }
@@ -458,97 +534,125 @@ class _DataSourceScreenState extends State<DataSourceScreen>
                 const SizedBox(
                   height: 24,
                 ),
-                (_pickedFile != null)
-                    ? Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(width: 2, color: Colors.teal),
-                          borderRadius:
-                              const BorderRadius.all(Radius.circular(20)),
-                          color: Colors.grey.shade200,
-                        ),
-                        height: 200,
-                        width: 400,
-                        child: ListTile(
-                          title: Text(_pickedFile!.name),
-                          subtitle: Text('${_pickedFile!.size} bytes'),
-                          trailing: const Icon(Icons.delete_outline_rounded),
-                          iconColor: Colors.red.shade500,
-                          onTap: () {
-                            setState(() {
-                              _pickedFile = null;
-                            });
-                          },
-                        ),
-                      )
-                    : GestureDetector(
-                        onTap: _pickFiles,
-                        child: DropTarget(
-                          onDragEntered: (detail) {
-                            setState(() {
-                              _dragging = true;
-                            });
-                          },
-                          onDragExited: (detail) {
-                            setState(() {
-                              _dragging = false;
-                            });
-                          },
-                          onDragDone: (detail) async {
-                            if (detail.files.isNotEmpty) {
-                              XFile droppedFile = detail.files.first;
-                              int fileSize = await droppedFile.length();
-                              PlatformFile file = PlatformFile(
-                                name: droppedFile.name,
-                                path: droppedFile.path,
-                                size: fileSize,
-                                bytes: await droppedFile.readAsBytes(),
-                              );
+                GestureDetector(
+                  onTap: _pickFiles,
+                  child: DropTarget(
+                    onDragEntered: (detail) {
+                      setState(() {
+                        _dragging = true;
+                      });
+                    },
+                    onDragExited: (detail) {
+                      setState(() {
+                        _dragging = false;
+                      });
+                    },
+                    onDragDone: (detail) async {
+                      if (detail.files.isNotEmpty) {
+                        List<XFile> droppedFiles = detail.files;
+                        for (final droppedFile in droppedFiles) {
+                          int fileSize = await droppedFile.length();
+                          String extension =
+                              droppedFile.name.split('.').last.toLowerCase();
 
-                              setState(() {
-                                _pickedFile = file;
-                                _dragging = false;
-                              });
-                            }
-                          },
-                          child: Container(
-                            height: 200,
-                            width: 400,
-                            decoration: BoxDecoration(
-                              border: Border.all(width: 2, color: Colors.black),
-                              borderRadius:
-                                  const BorderRadius.all(Radius.circular(20)),
-                              color: _dragging
-                                  ? Colors.green.shade200
-                                  : Colors.grey.shade200,
-                            ),
-                            child: Center(
-                              child: _pickedFile == null
-                                  ? const Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.upload_file_outlined,
-                                          color: Colors.grey,
-                                          size: 36,
-                                        ),
-                                        Text(
-                                          "파일을 끌어서 놓거나 클릭하여 파일 선택",
-                                          style: TextStyle(
-                                              color: Colors.grey, fontSize: 14),
-                                        ),
-                                        Text(
-                                          "지원 파일 형식 : .pdf, .txt, .xlsx",
-                                          style: TextStyle(
-                                              color: Colors.grey, fontSize: 12),
-                                        )
-                                      ],
-                                    )
-                                  : Text('Selected file: ${_pickedFile!.name}'),
-                            ),
-                          ),
-                        ),
+                          if (extension == 'pdf') {
+                            PlatformFile file = PlatformFile(
+                              name: droppedFile.name,
+                              path: droppedFile.path,
+                              size: fileSize,
+                              bytes: await droppedFile.readAsBytes(),
+                            );
+
+                            setState(() {
+                              _pickedFiles.add(FileData(
+                                  fileListId: _uniqueIdFileCounter,
+                                  serverId: -1,
+                                  contents: file));
+                              _dragging = false;
+                              _uniqueIdFileCounter++;
+                            });
+                          } else {
+                            // PDF가 아닌 파일은 처리하지 않음
+                            // showDialog(
+                            //   context: context,
+                            //   builder: (context) {
+                            //     return AlertDialog(
+                            //       title: const Text('파일 형식 오류'),
+                            //       content:
+                            //           const Text('PDF 파일만 업로드할 수 있습니다.'),
+                            //       actions: [
+                            //         TextButton(
+                            //           onPressed: () {
+                            //             Navigator.of(context).pop();
+                            //           },
+                            //           child: const Text('확인'),
+                            //         ),
+                            //       ],
+                            //     );
+                            //   },
+                            // );
+                          }
+                        }
+
+                        // PDF 파일인지 확인
+                      }
+                    },
+                    child: Container(
+                      height: 240,
+                      width: 500,
+                      decoration: BoxDecoration(
+                        border: Border.all(width: 2, color: Colors.black),
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(20)),
+                        color: _dragging
+                            ? Colors.green.shade200
+                            : Colors.grey.shade200,
                       ),
+                      child: Center(
+                          child: _pickedFiles.isEmpty
+                              ? const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.upload_file_outlined,
+                                      color: Colors.grey,
+                                      size: 36,
+                                    ),
+                                    Text(
+                                      "파일을 끌어서 놓거나 클릭하여 파일 선택",
+                                      style: TextStyle(
+                                          color: Colors.grey, fontSize: 14),
+                                    ),
+                                    Text(
+                                      "지원 파일 형식 : .pdf",
+                                      style: TextStyle(
+                                          color: Colors.grey, fontSize: 12),
+                                    )
+                                  ],
+                                )
+                              : ListView.builder(
+                                  itemCount: _pickedFiles.length,
+                                  itemBuilder: (context, index) {
+                                    return ListTile(
+                                      title: Text(
+                                          _pickedFiles[index].contents.name),
+                                      subtitle: Text(
+                                          '${_pickedFiles[index].contents.size} bytes'),
+                                      trailing: const Icon(
+                                          Icons.delete_outline_rounded),
+                                      iconColor: Colors.red.shade500,
+                                      onTap: () {
+                                        setState(() {
+                                          _pickedFiles.removeWhere((element) =>
+                                              element.fileListId ==
+                                              _pickedFiles[index].fileListId);
+                                        });
+                                      },
+                                    );
+                                  })),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 20),
               ],
             ),
@@ -573,6 +677,9 @@ class _DataSourceScreenState extends State<DataSourceScreen>
               SizedBox(height: MediaQuery.of(context).size.height / 48),
               Container(
                 height: MediaQuery.of(context).size.height / 3,
+                width: MediaQuery.of(context).size.width > 700
+                    ? MediaQuery.of(context).size.width / 2
+                    : MediaQuery.of(context).size.width,
                 decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8)),
@@ -626,98 +733,105 @@ class _DataSourceScreenState extends State<DataSourceScreen>
                 const SizedBox(
                   height: 24,
                 ),
-                (_pickedImage != null)
-                    ? Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(width: 2, color: Colors.teal),
-                          borderRadius:
-                              const BorderRadius.all(Radius.circular(20)),
-                          color: Colors.grey.shade200,
-                        ),
-                        height: 200,
-                        width: 400,
-                        child: ListTile(
-                          title: Text(_pickedImage!.name),
-                          subtitle: Text('${_pickedImage!.size} bytes'),
-                          trailing: const Icon(Icons.delete_outline_rounded),
-                          iconColor: Colors.red.shade500,
-                          onTap: () {
+                GestureDetector(
+                  onTap: _pickImages,
+                  child: DropTarget(
+                    onDragEntered: (detail) {
+                      setState(() {
+                        _draggingImage = true;
+                      });
+                    },
+                    onDragExited: (detail) {
+                      setState(() {
+                        _draggingImage = false;
+                      });
+                    },
+                    onDragDone: (detail) async {
+                      if (detail.files.isNotEmpty) {
+                        List<XFile> droppedFiles = detail.files;
+                        for (final droppedFile in droppedFiles) {
+                          int fileSize = await droppedFile.length();
+                          String extension =
+                              droppedFile.name.split('.').last.toLowerCase();
+
+                          // PNG 및 JPG 이미지 파일만 허용
+                          if (extension == 'png' ||
+                              extension == 'jpg' ||
+                              extension == 'jpeg') {
+                            PlatformFile file = PlatformFile(
+                              name: droppedFile.name,
+                              path: droppedFile.path,
+                              size: fileSize,
+                              bytes: await droppedFile.readAsBytes(),
+                            );
                             setState(() {
-                              _pickedImage = null;
-                            });
-                          },
-                        ),
-                      )
-                    : GestureDetector(
-                        onTap: _pickImages,
-                        child: DropTarget(
-                          onDragEntered: (detail) {
-                            setState(() {
-                              _draggingImage = true;
-                            });
-                          },
-                          onDragExited: (detail) {
-                            setState(() {
+                              _pickedImages.add(FileData(
+                                  fileListId: _uniqueIdImageCounter,
+                                  serverId: -1,
+                                  contents: file));
+                              _uniqueIdImageCounter++;
                               _draggingImage = false;
                             });
-                          },
-                          onDragDone: (detail) async {
-                            if (detail.files.isNotEmpty) {
-                              XFile droppedFile = detail.files.first;
-                              int fileSize = await droppedFile.length();
-                              PlatformFile file = PlatformFile(
-                                name: droppedFile.name,
-                                path: droppedFile.path,
-                                size: fileSize,
-                                bytes: await droppedFile.readAsBytes(),
-                              );
-
-                              setState(() {
-                                _pickedImage = file;
-                                _draggingImage = false;
-                              });
-                            }
-                          },
-                          child: Container(
-                            height: 200,
-                            width: 400,
-                            decoration: BoxDecoration(
-                              border: Border.all(width: 2, color: Colors.black),
-                              borderRadius:
-                                  const BorderRadius.all(Radius.circular(20)),
-                              color: _draggingImage
-                                  ? Colors.green.shade200
-                                  : Colors.grey.shade200,
-                            ),
-                            child: Center(
-                              child: _pickedImage == null
-                                  ? const Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.image,
-                                          color: Colors.grey,
-                                          size: 36,
-                                        ),
-                                        Text(
-                                          "이미지를 끌어서 놓거나 클릭하여 파일 선택",
-                                          style: TextStyle(
-                                              color: Colors.grey, fontSize: 14),
-                                        ),
-                                        Text(
-                                          "지원 파일 형식 : .png, .jpg",
-                                          style: TextStyle(
-                                              color: Colors.grey, fontSize: 12),
-                                        )
-                                      ],
-                                    )
-                                  : Text(
-                                      'Selected file: ${_pickedImage!.name}'),
-                            ),
-                          ),
-                        ),
+                          } else {}
+                        }
+                      }
+                    },
+                    child: Container(
+                      height: 240,
+                      width: 500,
+                      decoration: BoxDecoration(
+                        border: Border.all(width: 2, color: Colors.black),
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(20)),
+                        color: _draggingImage
+                            ? Colors.green.shade200
+                            : Colors.grey.shade200,
                       ),
+                      child: Center(
+                          child: _pickedImages.isEmpty
+                              ? const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.image,
+                                      color: Colors.grey,
+                                      size: 36,
+                                    ),
+                                    Text(
+                                      "이미지를 끌어서 놓거나 클릭하여 파일 선택",
+                                      style: TextStyle(
+                                          color: Colors.grey, fontSize: 14),
+                                    ),
+                                    Text(
+                                      "지원 파일 형식 : .png, .jpg",
+                                      style: TextStyle(
+                                          color: Colors.grey, fontSize: 12),
+                                    )
+                                  ],
+                                )
+                              : ListView.builder(
+                                  itemCount: _pickedImages.length,
+                                  itemBuilder: (context, index) {
+                                    return ListTile(
+                                      title: Text(
+                                          _pickedImages[index].contents.name),
+                                      subtitle: Text(
+                                          '${_pickedImages[index].contents.size} bytes'),
+                                      trailing: const Icon(
+                                          Icons.delete_outline_rounded),
+                                      iconColor: Colors.red.shade500,
+                                      onTap: () {
+                                        setState(() {
+                                          _pickedImages.removeWhere((element) =>
+                                              element.fileListId ==
+                                              _pickedImages[index].fileListId);
+                                        });
+                                      },
+                                    );
+                                  })),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 20),
               ],
             ),
@@ -783,6 +897,110 @@ class _DataSourceScreenState extends State<DataSourceScreen>
                 ]),
           ),
         )),
+        pageItem(Padding(
+          padding: EdgeInsets.symmetric(
+              vertical: MediaQuery.of(context).size.height / 24,
+              horizontal: MediaQuery.of(context).size.width / 12),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height / 2,
+            child: Column(
+              children: [
+                const Text(
+                  "Upload audio",
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+                const SizedBox(
+                  height: 24,
+                ),
+                GestureDetector(
+                  onTap: _pickAudio,
+                  child: DropTarget(
+                    onDragEntered: (detail) {
+                      setState(() {
+                        _draggingAudio = true;
+                      });
+                    },
+                    onDragExited: (detail) {
+                      setState(() {
+                        _draggingAudio = false;
+                      });
+                    },
+                    onDragDone: (detail) async {
+                      if (detail.files.isNotEmpty) {
+                        XFile droppedFile = detail.files.first;
+
+                        int fileSize = await droppedFile.length();
+                        String extension =
+                            droppedFile.name.split('.').last.toLowerCase();
+
+                        // PNG 및 JPG 이미지 파일만 허용
+                        if (extension == 'mp3') {
+                          PlatformFile file = PlatformFile(
+                            name: droppedFile.name,
+                            path: droppedFile.path,
+                            size: fileSize,
+                            bytes: await droppedFile.readAsBytes(),
+                          );
+                          setState(() {
+                            _pickedAudio = file;
+                            _draggingAudio = false;
+                          });
+                        } else {}
+                      }
+                    },
+                    child: Container(
+                      height: 240,
+                      width: 500,
+                      decoration: BoxDecoration(
+                        border: Border.all(width: 2, color: Colors.black),
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(20)),
+                        color: _draggingAudio
+                            ? Colors.green.shade200
+                            : Colors.grey.shade200,
+                      ),
+                      child: Center(
+                          child: _pickedAudio == null
+                              ? const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.image,
+                                      color: Colors.grey,
+                                      size: 36,
+                                    ),
+                                    Text(
+                                      "오디오를 끌어서 놓거나 클릭하여 파일 선택",
+                                      style: TextStyle(
+                                          color: Colors.grey, fontSize: 14),
+                                    ),
+                                    Text(
+                                      "지원 파일 형식 : .mp3",
+                                      style: TextStyle(
+                                          color: Colors.grey, fontSize: 12),
+                                    )
+                                  ],
+                                )
+                              : ListTile(
+                                  title: Text(_pickedAudio!.name),
+                                  subtitle: Text('${_pickedAudio!.size} bytes'),
+                                  trailing:
+                                      const Icon(Icons.delete_outline_rounded),
+                                  iconColor: Colors.red.shade500,
+                                  onTap: () {
+                                    setState(() {
+                                      _pickedAudio = null;
+                                    });
+                                  },
+                                )),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        )),
       ],
       onPageChanged: (index) => setState(() => pageIndex = index),
     );
@@ -802,14 +1020,22 @@ class _DataSourceScreenState extends State<DataSourceScreen>
 
 class UrlContainer extends StatefulWidget {
   final int id;
-  final Function(int) onDelete;
+  final Function(
+    int,
+  ) onDelete;
   final TextEditingController controller;
   bool isYoutube;
+  bool fromServer;
+  int? addId;
+  int? suggestionId;
   UrlContainer(
       {required this.controller,
       required this.id,
       required this.onDelete,
       this.isYoutube = false,
+      this.fromServer = false,
+      this.addId,
+      this.suggestionId,
       Key? key})
       : super(key: key);
 
@@ -837,36 +1063,58 @@ class _UrlContainerState extends State<UrlContainer> {
             child: Row(
               children: [
                 Expanded(
-                  child: SizedBox(
-                    height:
-                        42, // Set the desired height for both TextField and Button
-                    child: TextField(
-                      controller: widget.controller,
-                      cursorColor: Colors.grey,
-                      decoration: InputDecoration(
-                        hintText: "https://example.com",
-                        hintStyle: TextStyle(color: Colors.grey.shade600),
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: const OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.transparent,
-                            width: 1.0,
+                  child: InkWell(
+                    onTap: widget.fromServer
+                        ? () async {
+                            if (await canLaunchUrl(
+                                Uri.parse(widget.controller.text))) {
+                              await launchUrl(Uri.parse(
+                                  widget.controller.text)); // URL을 엽니다.
+                            } else {
+                              throw 'Could not launch ${widget.controller.text}';
+                            }
+                          }
+                        : null,
+                    child: SizedBox(
+                      height:
+                          42, // Set the desired height for both TextField and Button
+                      child: TextField(
+                        style: TextStyle(
+                            color: widget.fromServer
+                                ? Colors.white
+                                : Colors.black),
+                        enabled: !widget.fromServer,
+                        controller: widget.controller,
+                        cursorColor: Colors.grey,
+                        decoration: InputDecoration(
+                          hintText: widget.isYoutube
+                              ? "https://www.youtube.com/watch?v=example"
+                              : "https://example.com",
+                          hintStyle: TextStyle(color: Colors.grey.shade600),
+                          filled: true,
+                          fillColor: widget.fromServer
+                              ? const Color.fromARGB(255, 46, 50, 52)
+                              : Colors.white,
+                          border: const OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.transparent,
+                              width: 1.0,
+                            ),
                           ),
-                        ),
-                        focusedBorder: const OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.transparent,
-                            width: 1.0,
+                          focusedBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.transparent,
+                              width: 1.0,
+                            ),
                           ),
-                        ),
-                        enabledBorder: const OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.transparent,
-                            width: 1.0,
+                          enabledBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.transparent,
+                              width: 1.0,
+                            ),
                           ),
+                          contentPadding: const EdgeInsets.all(8.0),
                         ),
-                        contentPadding: const EdgeInsets.all(8.0),
                       ),
                     ),
                   ),
@@ -874,23 +1122,21 @@ class _UrlContainerState extends State<UrlContainer> {
                 const SizedBox(width: 12),
                 InkWell(
                   onTap: () {
-                    print("onTap ${widget.id}");
-                    widget.onDelete(
-                        widget.id); // Call the onDelete callback with the ID
+                    widget.onDelete(widget.id);
                   },
                   child: Container(
-                    width: MediaQuery.of(context).size.width / 7,
+                    width: MediaQuery.of(context).size.width / 12,
                     height: 42, // Set the desired height for the button
                     decoration: BoxDecoration(
-                      color: widget.isYoutube
+                      color: widget.isYoutube || widget.fromServer
                           ? Colors.red
                           : const Color(0x44000000), //const Color(0xFF2A364B),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Text(
-                        "취소",
-                        style: TextStyle(
+                        widget.fromServer ? "삭제" : "취소",
+                        style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
                             fontWeight: FontWeight.bold),

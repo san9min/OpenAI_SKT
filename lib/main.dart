@@ -27,25 +27,24 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-
-      onGenerateRoute: MyFluroRouter.router.generator,
-      //darkTheme: ThemeData.dark(),
-      theme: ThemeData(
-        //colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        //useMaterial3: true,
-        scaffoldBackgroundColor: const Color.fromARGB(255, 46, 50, 52),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color.fromARGB(255, 36, 36, 36),
+        title: "aurdey",
+        debugShowCheckedModeBanner: false,
+        onGenerateRoute: MyFluroRouter.router.generator,
+        //darkTheme: ThemeData.dark(),
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          unselectedWidgetColor: Colors.white,
+          scaffoldBackgroundColor: const Color.fromARGB(255, 46, 50, 52),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Color.fromARGB(255, 36, 36, 36),
+          ),
+          //  fontFamily: GoogleFonts.notoSans().fontFamily,
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+          hoverColor: Colors.transparent,
+          shadowColor: Colors.transparent, // 그림자를 없앰
         ),
-        //  fontFamily: GoogleFonts.notoSans().fontFamily,
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        hoverColor: Colors.transparent,
-        shadowColor: Colors.transparent, // 그림자를 없앰
-      ),
-      home: const Home(),
-    );
+        home: const Home());
   }
 }
 
@@ -103,10 +102,10 @@ class MyFluroRouter {
 
   static final Handler _ResultHandler = Handler(
       handlerFunc: (BuildContext? context, Map<String, dynamic> params) {
-    final args = context!.settings!.arguments as Map;
-    final draftId = args["draftId"];
-    final projectName = args["projectName"];
-    final projectId = args["projectId"];
+    String projectName = Uri.decodeFull(params['projectname'][0]);
+
+    int projectId = int.parse(params['projectId'][0]);
+    int draftId = int.parse(params['draftId'][0]);
     return ResultScreen(
       draftId: draftId,
       projectName: projectName,
@@ -116,7 +115,7 @@ class MyFluroRouter {
 
   static void setupRouter() {
     router.define("/",
-        handler: _HomePageHandler, transitionType: TransitionType.fadeIn);
+        handler: _HomePageHandler, transitionType: TransitionType.none);
     router.define("/callback",
         handler: _AuthHandler, transitionType: TransitionType.fadeIn);
     router.define("/auth/login",
@@ -131,7 +130,7 @@ class MyFluroRouter {
     router.define("/add/data/:projectname/:projectId/:sourcetype",
         handler: _AddDataPageHandler, transitionType: TransitionType.fadeIn);
 
-    router.define("/edit/:projectname/:projectId",
-        handler: _ResultHandler, transitionType: TransitionType.fadeIn);
+    router.define("/edit/:projectname/:projectId/:draftId",
+        handler: _ResultHandler, transitionType: TransitionType.none);
   }
 }

@@ -13,9 +13,9 @@ class ChatUsers {
 class ChatMessage {
   String messageContent;
   String messageType;
-  String messageProduct;
-  ChatMessage(
-      {required this.messageContent,
-      required this.messageType,
-      required this.messageProduct});
+
+  ChatMessage({
+    required this.messageContent,
+    required this.messageType,
+  });
 }

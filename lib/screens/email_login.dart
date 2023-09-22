@@ -18,6 +18,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
   FocusNode passwordFocus = FocusNode();
   TextEditingController passwordController = TextEditingController();
   bool wrongPassword = false;
+  bool userNotExist = false;
 
   @override
   void initState() {
@@ -165,19 +166,34 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
             const SizedBox(
               height: 12,
             ),
-            if (wrongPassword)
-              const Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.warning_amber_rounded, color: Colors.red),
-                    Text("비밀번호가 올바르지 않습니다",
-                        style: TextStyle(color: Colors.red)),
-                  ],
-                ),
-              ),
+            wrongPassword
+                ? const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.warning_amber_rounded, color: Colors.red),
+                        Text("비밀번호가 올바르지 않습니다",
+                            style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
+                  )
+                : userNotExist
+                    ? const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.warning_amber_rounded,
+                                color: Colors.red),
+                            Text("존재하지 않는 계정입니다.",
+                                style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      )
+                    : Container(),
             InkWell(
               onTap: () async {
                 wrongPassword = false;
@@ -194,6 +210,10 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                   cookie.set('refresh_token', res["refresh_token"]);
                   if (!mounted) return;
                   MyFluroRouter.router.navigateTo(context, '/', replace: true);
+                } else {
+                  setState(() {
+                    userNotExist = true;
+                  });
                 }
               },
               child: Container(

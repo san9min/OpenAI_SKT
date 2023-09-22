@@ -18,7 +18,7 @@ class _BuildScreenState extends State<BuildScreen>
   TextEditingController purposeController = TextEditingController();
   TextEditingController projectNameController = TextEditingController();
   FocusNode suggestionFocus = FocusNode();
-  FocusNode purposeFocus = FocusNode();
+  String topic = "";
   bool isLoading = false;
   bool getSuggestion = false;
   bool indexRender = false;
@@ -29,15 +29,12 @@ class _BuildScreenState extends State<BuildScreen>
   @override
   void initState() {
     super.initState();
-    purposeFocus.addListener(() {
-      setState(() {});
-    });
+
     //var cookie = Cookie.create();
   }
 
   @override
   void dispose() {
-    purposeFocus.dispose();
     purposeController.dispose();
     super.dispose();
   }
@@ -82,100 +79,153 @@ class _BuildScreenState extends State<BuildScreen>
                 ]),
           ),
           children: [
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Text(
-                projectName,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold),
+            if (!isLoading)
+              Center(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.only(right: 24.0, left: 24.0, top: 24.0),
+                  child: Text(
+                    projectName,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                    ),
+                  ),
+                ),
               ),
-            ),
+            if (!isLoading)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8.0, vertical: 12.0),
+                  child: Text(
+                    topic,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            if (isLoading)
+              const Padding(
+                padding: EdgeInsets.all(24.0),
+                child: Text(
+                  "",
+                  style: TextStyle(
+                    color: Colors.transparent,
+                    fontSize: 24,
+                  ),
+                ),
+              ),
             getSuggestion
-                ? Column(
-                    children: [
-                      const Text(
-                        "Suggestion",
-                        style: TextStyle(
-                            color: Colors.lightBlue,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(
-                        height: 12,
-                      ),
-                      const Text(
-                          "다음과 같이 자료를 찾아봤어요!\n 원하시는 자료를 선택해주시면 선택하신 자료를 Assistant가 학습해 보고서 작성을 도와드려요",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400)),
-                      const SizedBox(
-                        height: 12,
-                      ),
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width / 1.5,
-                        child: Row(
+                ? Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Center(
+                      child: Container(
+                        width: MediaQuery.of(context).size.width > 700
+                            ? MediaQuery.of(context).size.width * 0.6
+                            : MediaQuery.of(context).size.width * 0.95,
+                        alignment: Alignment.center,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Checkbox(
-                              checkColor: Colors.white,
-                              activeColor: Colors.cyan,
-                              value: isAllSelected,
-                              onChanged: (value) {
-                                setState(() {
-                                  isAllSelected = !isAllSelected;
-                                  for (var item in informationList) {
-                                    item.isSelected = isAllSelected;
-                                  }
-                                });
-                              },
+                            const Text(
+                              "Suggestion",
+                              //textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600),
                             ),
-                            Text(
-                              isAllSelected ? '전체 해제' : '전체 선택',
-                              style: const TextStyle(color: Colors.white),
+                            const SizedBox(
+                              height: 12,
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 12,
-                      ),
-                      SelectableRegion(
-                        selectionControls: materialTextSelectionControls,
-                        focusNode:
-                            suggestionFocus, // initialized to FocusNode()
-                        child: SizedBox(
-                            width: MediaQuery.of(context).size.width / 1.5,
-                            height: MediaQuery.of(context).size.height / 1.5,
-                            child: MediaQuery.of(context).size.width < 700
-                                ? ListView.separated(
+                            const Text(
+                                "다음과 같이 자료를 찾아봤어요!\n원하시는 자료를 선택해주시면 선택하신 자료를 Agent가 학습해 보고서 작성을 도와드려요",
+                                textAlign: TextAlign.left,
+                                style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400)),
+                            const SizedBox(
+                              height: 8,
+                            ),
+                            const Divider(color: Colors.grey),
+                            const SizedBox(
+                              height: 8,
+                            ),
+                            SizedBox(
+                              //width: MediaQuery.of(context).size.width ,
+                              child: Row(
+                                children: [
+                                  Checkbox(
+                                    checkColor: Colors.white,
+                                    activeColor: Colors.blue,
+                                    value: isAllSelected,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        isAllSelected = !isAllSelected;
+                                        for (var item in informationList) {
+                                          item.isSelected = isAllSelected;
+                                        }
+                                      });
+                                    },
+                                  ),
+                                  Text(
+                                    isAllSelected ? '전체 해제' : '전체 선택',
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 12,
+                            ),
+                            SelectableRegion(
+                              selectionControls: materialTextSelectionControls,
+                              focusNode:
+                                  suggestionFocus, // initialized to FocusNode()
+                              child: SizedBox(
+                                  width: MediaQuery.of(context).size.width > 700
+                                      ? MediaQuery.of(context).size.width * 0.6
+                                      : MediaQuery.of(context).size.width *
+                                          0.95,
+                                  height:
+                                      MediaQuery.of(context).size.height / 1.2,
+                                  child:
+                                      //  MediaQuery.of(context).size.width < 700
+                                      //     ?
+                                      ListView.separated(
                                     separatorBuilder: (context, index) =>
                                         const SizedBox(height: 12),
                                     itemCount: informationList.length,
                                     itemBuilder: (context, index) {
-                                      bool isExpanded =
-                                          informationList[index].isExpanded;
+                                      // bool isExpanded =
+                                      //     informationList[index].isExpanded;
 
-                                      Color titleColor = isExpanded
-                                          ? Colors.black
-                                          : Colors.white;
+                                      Color titleColor = Colors.white;
+                                      //  isExpanded
+                                      //     ? Colors.black
+                                      //     : Colors.white;
 
                                       return Container(
                                         decoration: BoxDecoration(
+                                          color: const Color.fromARGB(
+                                              255, 46, 50, 52),
                                           borderRadius:
                                               BorderRadius.circular(8),
-                                          border:
-                                              Border.all(color: Colors.grey),
+                                          // border: Border.all(color: Colors.grey),
                                         ),
                                         width: double.infinity,
                                         child: ExpansionTile(
                                           initiallyExpanded:
                                               informationList[index].isExpanded,
                                           clipBehavior: Clip.antiAlias,
-                                          backgroundColor: Colors.white,
-                                          iconColor: Colors.black,
+                                          backgroundColor: Colors.transparent,
+                                          iconColor: Colors.grey,
                                           onExpansionChanged: (expanded) {
                                             setState(() {
                                               informationList[index]
@@ -183,7 +233,7 @@ class _BuildScreenState extends State<BuildScreen>
                                             });
                                           },
                                           leading: Checkbox(
-                                            activeColor: Colors.cyan,
+                                            activeColor: Colors.blue,
                                             value: informationList[index]
                                                 .isSelected,
                                             onChanged: (value) {
@@ -202,7 +252,10 @@ class _BuildScreenState extends State<BuildScreen>
                                               ),
                                               const SizedBox(width: 12),
                                               SizedBox(
-                                                width: 175,
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.4,
                                                 child: Text(
                                                   informationList[index].title,
                                                   style: TextStyle(
@@ -218,186 +271,68 @@ class _BuildScreenState extends State<BuildScreen>
                                             Padding(
                                               padding:
                                                   const EdgeInsets.all(8.0),
-                                              child: Text(informationList[index]
-                                                  .content),
-                                            ),
-                                            Center(
-                                              child: InkWell(
-                                                // InkWell을 사용하여 텍스트를 터치 가능하게 만듭니다.
-                                                onTap: () async {
-                                                  final url =
-                                                      informationList[index]
-                                                          .url;
-                                                  if (await canLaunchUrl(
-                                                      Uri.parse(url))) {
-                                                    await launchUrl(Uri.parse(
-                                                        url)); // URL을 엽니다.
-                                                  } else {
-                                                    throw 'Could not launch $url';
-                                                  }
-                                                },
-                                                child: Padding(
-                                                  padding: const EdgeInsets
-                                                          .symmetric(
-                                                      horizontal: 4.0),
-                                                  child: Text(
-                                                    informationList[index].url,
-                                                    style: const TextStyle(
-                                                        color: Colors.blue,
-                                                        overflow: TextOverflow
-                                                            .ellipsis),
-                                                  ),
-                                                ),
+                                              child: Text(
+                                                informationList[index].content,
+                                                style: const TextStyle(
+                                                    color: Colors.white70),
                                               ),
                                             ),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                  )
-                                : GridView.builder(
-                                    gridDelegate:
-                                        SliverGridDelegateWithFixedCrossAxisCount(
-                                            crossAxisCount:
-                                                MediaQuery.of(context)
-                                                            .size
-                                                            .width >
-                                                        1000
-                                                    ? 3
-                                                    : 2, // 한 줄에 세 개의 열
-                                            mainAxisExtent: 320,
-                                            mainAxisSpacing: 12,
-                                            crossAxisSpacing: 12),
-                                    itemCount: informationList.length,
-                                    itemBuilder: (context, index) {
-                                      bool isExpanded =
-                                          informationList[index].isExpanded;
-
-                                      Color titleColor = isExpanded
-                                          ? Colors.black
-                                          : Colors.white;
-                                      return Container(
-                                        decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            border:
-                                                Border.all(color: Colors.grey)),
-                                        child: ExpansionTile(
-                                          clipBehavior: Clip.antiAlias,
-                                          initiallyExpanded:
-                                              informationList[index].isExpanded,
-                                          iconColor: Colors.black,
-                                          backgroundColor: Colors.white,
-                                          onExpansionChanged: (expanded) {
-                                            setState(() {
-                                              informationList[index]
-                                                  .isExpanded = expanded;
-                                            });
-                                          },
-                                          leading: Checkbox(
-                                            activeColor: Colors.cyan,
-                                            value: informationList[index]
-                                                .isSelected,
-                                            onChanged: (value) {
-                                              setState(() {
-                                                informationList[index]
-                                                    .isSelected = value!;
-                                              });
-                                            },
-                                          ),
-                                          title: Row(
-                                            children: [
-                                              Image.network(
-                                                informationList[index]
-                                                    .favicon_url,
-                                                width: 24,
-                                              ),
-                                              const SizedBox(width: 12),
-                                              SizedBox(
-                                                width: 175,
-                                                child: Text(
-                                                  informationList[index].title,
-                                                  style: TextStyle(
-                                                      color: titleColor,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      fontSize: 14),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          children: [
-                                            Column(children: [
-                                              SizedBox(
-                                                height: 236,
-                                                child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                            8.0),
-                                                    child:
-                                                        SingleChildScrollView(
-                                                      child: Text(
-                                                          informationList[index]
-                                                              .content),
-                                                    )),
-                                              ),
-                                              Center(
-                                                child: InkWell(
-                                                  // InkWell을 사용하여 텍스트를 터치 가능하게 만듭니다.
-                                                  onTap: () async {
-                                                    final url =
-                                                        informationList[index]
-                                                            .url;
-                                                    if (await canLaunchUrl(
-                                                        Uri.parse(url))) {
-                                                      await launchUrl(Uri.parse(
-                                                          url)); // URL을 엽니다.
-                                                    } else {
-                                                      throw 'Could not launch $url';
-                                                    }
-                                                  },
-                                                  child: Padding(
-                                                    padding: const EdgeInsets
-                                                            .symmetric(
+                                            InkWell(
+                                              onTap: () async {
+                                                final url =
+                                                    informationList[index].url;
+                                                if (await canLaunchUrl(
+                                                    Uri.parse(url))) {
+                                                  await launchUrl(Uri.parse(
+                                                      url)); // URL을 엽니다.
+                                                } else {
+                                                  throw 'Could not launch $url';
+                                                }
+                                              },
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
                                                         horizontal: 4.0),
-                                                    child: Text(
-                                                      informationList[index]
-                                                          .url,
-                                                      style: const TextStyle(
-                                                          color: Colors.blue,
-                                                          overflow: TextOverflow
-                                                              .ellipsis),
-                                                    ),
-                                                  ),
+                                                child: Text(
+                                                  informationList[index].url,
+                                                  style: const TextStyle(
+                                                      color: Colors.blue,
+                                                      decoration: TextDecoration
+                                                          .underline,
+                                                      overflow: TextOverflow
+                                                          .ellipsis),
                                                 ),
                                               ),
-                                            ]),
+                                            ),
                                           ],
                                         ),
                                       );
                                     },
                                   )),
-                      ),
-                      if (selectedInformationListisEmpty)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 8.0),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.warning_amber_rounded,
-                                  color: Colors.red),
-                              SizedBox(width: 12),
-                              Text("하나 이상의 자료를 선택해주세요!",
-                                  style: TextStyle(color: Colors.red)),
-                            ],
-                          ),
+                            ),
+                            if (selectedInformationListisEmpty)
+                              const Padding(
+                                padding: EdgeInsets.only(top: 8.0),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.warning_amber_rounded,
+                                        color: Colors.red),
+                                    SizedBox(width: 12),
+                                    Text("하나 이상의 자료를 선택해주세요!",
+                                        style: TextStyle(color: Colors.red)),
+                                  ],
+                                ),
+                              ),
+                            const SizedBox(
+                              height: 12,
+                            ),
+                            CreateButton(),
+                          ],
                         ),
-                      const SizedBox(
-                        height: 12,
                       ),
-                      CreateButton(),
-                    ],
+                    ),
                   )
                 : Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -414,22 +349,19 @@ class _BuildScreenState extends State<BuildScreen>
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text("Project Name",
+                                  const Text("Name",
                                       style: TextStyle(
-                                          color: Colors.blueAccent,
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold)),
-                                  const SizedBox(height: 12),
-                                  const Text("프로젝트 이름을 정해주세요",
-                                      style: TextStyle(
-                                          color: Colors.grey,
-                                          fontWeight: FontWeight.w400)),
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w600)),
                                   const SizedBox(height: 12),
                                   TextField(
+                                    style: const TextStyle(color: Colors.white),
                                     controller: projectNameController,
                                     cursorColor: Colors.grey.shade600,
                                     decoration: const InputDecoration(
-                                      fillColor: Colors.white,
+                                      fillColor:
+                                          Color.fromARGB(255, 46, 50, 52),
                                       filled: true,
                                       enabledBorder: OutlineInputBorder(
                                         borderSide: BorderSide(
@@ -443,7 +375,8 @@ class _BuildScreenState extends State<BuildScreen>
                                           width: 1.0,
                                         ),
                                       ),
-                                      hintText: "프로젝트 이름을 입력해주세요",
+                                      hintText: "프로젝트 이름을 정해주세요",
+                                      hintStyle: TextStyle(color: Colors.grey),
                                       contentPadding: EdgeInsets.all(18.0),
                                     ),
                                   ),
@@ -478,8 +411,8 @@ class _BuildScreenState extends State<BuildScreen>
                                       ),
                                       Text(
                                         indexRender
-                                            ? "관련 자료를 찾고 있습니다..."
-                                            : "목차를 생성 중입니다...",
+                                            ? "관련 자료를 찾고 있습니다"
+                                            : "목차를 생성 중입니다",
                                         style: const TextStyle(
                                             color: Colors.grey,
                                             fontWeight: FontWeight.w600),
@@ -493,50 +426,55 @@ class _BuildScreenState extends State<BuildScreen>
                                       Text(
                                         indexRender
                                             ? "Table of Contents"
-                                            : "Topic | Purpose",
+                                            : "Topic",
                                         style: const TextStyle(
-                                            color: Colors.blueAccent,
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold),
+                                            color: Colors.white,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w600),
                                       ),
                                       const SizedBox(height: 12),
                                       Text(
-                                          indexRender
-                                              ? "다음과 같이 목차를 작성해봤어요.\n목차를 기준으로 관련 자료를 수집하고 초안을 작성해요! 필요하신 경우 수정해주세요"
-                                              : "해당 프로젝트의 주제/ 목적을 알려주세요. \nAssistant가 목차를 작성하고 관련 자료를 찾아드려요",
-                                          style: const TextStyle(
-                                            color: Colors.grey,
-                                            fontWeight: FontWeight.w400,
-                                          )),
+                                        indexRender
+                                            ? "다음과 같이 목차를 작성해봤어요. \n목차를 기준으로 관련 자료를 수집하고 초안을 작성해요! 필요하신 경우 수정해주세요"
+                                            : "프로젝트의 주제를 알려주세요. \nAgent가 목차를 작성하고 관련 자료를 찾아드려요",
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                        textAlign: TextAlign.left,
+                                      ),
                                       const SizedBox(height: 12),
                                       Container(
                                         decoration: BoxDecoration(
                                           borderRadius:
                                               BorderRadius.circular(8),
-                                          color: Colors.white,
                                         ),
-                                        height:
-                                            MediaQuery.of(context).size.height /
-                                                2.5,
+                                        height: indexRender
+                                            ? MediaQuery.of(context)
+                                                    .size
+                                                    .height /
+                                                2.5
+                                            : MediaQuery.of(context)
+                                                    .size
+                                                    .height /
+                                                4,
                                         child: TextField(
+                                          style: const TextStyle(
+                                              color: Colors.white),
                                           controller: purposeController,
-                                          maxLines: indexRender ? null : 10,
-                                          focusNode: purposeFocus,
+                                          maxLines: 200,
                                           keyboardType: TextInputType.multiline,
                                           decoration: InputDecoration(
                                             //floatingLabelBehavior: FloatingLabelBehavior.always,
-                                            labelText:
-                                                indexRender ? "목차" : "Purpose",
-                                            labelStyle: TextStyle(
-                                              color: purposeFocus.hasFocus
-                                                  ? Colors.blue
-                                                  : Colors.grey,
-                                            ),
+                                            hintText: indexRender
+                                                ? "1.소제목 \n-구성1\n-구성2"
+                                                : "주제를 알려주세요",
 
-                                            hintStyle: TextStyle(
-                                                color: Colors.grey.shade600),
+                                            hintStyle: const TextStyle(
+                                                color: Colors.grey),
                                             filled: true,
-                                            fillColor: Colors.white,
+                                            fillColor: const Color.fromARGB(
+                                                255, 46, 50, 52),
                                             border: const OutlineInputBorder(
                                               borderSide: BorderSide(
                                                 color: Colors.transparent,
@@ -594,6 +532,7 @@ class _BuildScreenState extends State<BuildScreen>
                   selectedInformationListisEmpty = true;
                 });
               } else {
+                ProjectAPI.selectSuggestion(projectId, selectedInformationList);
                 MyFluroRouter.router.navigateTo(
                     context, "/add/data/$projectName/$projectId/manual",
                     routeSettings: RouteSettings(arguments: {
@@ -614,6 +553,7 @@ class _BuildScreenState extends State<BuildScreen>
 
               setState(() {
                 projectName = projectNameController.text;
+                topic = purposeController.text;
                 indexRender = true;
                 isLoading = false;
                 purposeController.text = indexResponse['table'];

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:flutter/services.dart';
 import 'package:flutter_markdown_selectionarea/flutter_markdown_selectionarea.dart';
+import 'package:jumping_dot/jumping_dot.dart';
 import 'package:markdown_toolbar/markdown_toolbar.dart';
 import 'package:provider/provider.dart';
+import 'package:researchtool/api/project.dart';
 import 'package:researchtool/model/dratf.dart';
 
 class Draft extends StatefulWidget {
@@ -11,9 +12,12 @@ class Draft extends StatefulWidget {
     Key? key,
     required this.draft,
     required this.isTrained,
+    required this.draftId,
+    required this.projectName,
   }) : super(key: key);
-
+  final int draftId;
   final String draft;
+  final String projectName;
   final bool isTrained;
   @override
   State<Draft> createState() => _DraftState();
@@ -23,26 +27,27 @@ class _DraftState extends State<Draft> {
   bool isfirst = true;
   bool _loading = false;
   Timer? blinkingTimer;
+  bool copyComplete = false;
   //
-  bool isExpansion = false;
+  late String selectedText = "";
+
+  late FocusNode _selectionFocusNode;
+
   bool isEdit = false;
   final textcontroller = TextEditingController();
   ScrollController markdownscroll = ScrollController();
   late final FocusNode markdownFocusnode;
   final TextEditingController markdownController = TextEditingController();
-  String? userName;
-  String? userImg;
 
   int chatId = -1;
-  String modelText = '';
-  TextEditingController modelTextcontroller = TextEditingController();
-  TextEditingController reportNameController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     markdownController.addListener(() => setState(() {}));
     markdownFocusnode = FocusNode();
+
+    _selectionFocusNode = FocusNode();
   }
 
   @override
@@ -50,155 +55,112 @@ class _DraftState extends State<Draft> {
     textcontroller.dispose();
     markdownController.dispose();
     markdownFocusnode.dispose();
-    reportNameController.dispose();
-    modelTextcontroller.dispose();
+
+    _selectionFocusNode.dispose();
     super.dispose();
   }
 
-  void sendMessage(userInput) async {
-    // blinkingTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
-    //   setState(() {
-    //     if (modelText.isEmpty) {
-    //       modelText = "|";
-    //     } else {
-    //       modelText = "";
-    //     }
-    //   });
-    // });
-    // bool isFirstData = true;
-
-    // await for (final message in ApiService.sendData(userChat, chatId)) {
-    //   if (isFirstData) {
-    //     blinkingTimer?.cancel();
-    //     modelText = "";
-    //     isFirstData = false;
-    //   }
-    //   if (message.contains("#####chat_id:")) {
-    //     setState(() {
-    //       _loading = false;
-    //     });
-    //     id = int.parse(message.split("#####ex_id:")[1].trim());
-
-    //     if (chatId == -1) {
-    //       chatId = int.parse(
-    //           message.split("#####chat_id:")[1].split("#####")[0].trim());
-    //     }
-    //     continue; // id 값이 할당되었으므로 루프를 빠져나옴
-    //   }
-    //   setState(() {
-    //     modelText += message;
-    //   });
-    // }
-
-    // setState(() {
-    //   _loading = false;
-    // });
-  }
-
-  void _handleNewChatPressed() {
-    setState(() {
-      _loading = false;
-      modelText = '';
-      chatId = -1;
-    });
-  }
-
-  void _showSetNewProjectNameDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("저장하기"),
-          content: Container(
-            constraints: const BoxConstraints(maxHeight: 64),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: reportNameController,
-                  cursorColor: Colors.grey.shade600,
-                  decoration: const InputDecoration(
-                    fillColor: Colors.white,
-                    filled: true,
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Colors.grey,
-                        width: 1.0,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Colors.grey,
-                        width: 1.0,
-                      ),
-                    ),
-                    hintText: "Report 이름을 입력해주세요",
-                    contentPadding: EdgeInsets.all(18.0),
-                  ),
-                ),
-                const SizedBox(
-                  height: 12,
-                )
-              ],
-            ),
-          ),
-          actions: [
-            InkWell(
-              onTap: () {
-                Navigator.of(context).pop(); // 다이얼로그 닫기
-                reportNameController.text = "";
-              },
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8), color: Colors.grey),
-                child: const Text(
-                  '취소',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ),
-            InkWell(
-              onTap: () {
-                if (reportNameController.text.isNotEmpty) {
-                  reportNameController.text = "";
-                  Navigator.of(context).pop();
-                  //Post request
-                }
-              },
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: Colors.indigo,
-                ),
-                child: const Text(
-                  '확인',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  // void _showSetNewProjectNameDialog(BuildContext context) {
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) {
+  //       return AlertDialog(
+  //         title: const Text("저장하기"),
+  //         content: Container(
+  //           constraints: const BoxConstraints(maxHeight: 64),
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               TextField(
+  //                 controller: draftNameController,
+  //                 cursorColor: Colors.grey.shade600,
+  //                 decoration: const InputDecoration(
+  //                   fillColor: Colors.white,
+  //                   filled: true,
+  //                   enabledBorder: OutlineInputBorder(
+  //                     borderSide: BorderSide(
+  //                       color: Colors.grey,
+  //                       width: 1.0,
+  //                     ),
+  //                   ),
+  //                   focusedBorder: OutlineInputBorder(
+  //                     borderSide: BorderSide(
+  //                       color: Colors.grey,
+  //                       width: 1.0,
+  //                     ),
+  //                   ),
+  //                   hintText: "Report 이름을 입력해주세요",
+  //                   contentPadding: EdgeInsets.all(18.0),
+  //                 ),
+  //               ),
+  //               const SizedBox(
+  //                 height: 12,
+  //               )
+  //             ],
+  //           ),
+  //         ),
+  //         actions: [
+  //           InkWell(
+  //             onTap: () {
+  //               Navigator.of(context).pop(); // 다이얼로그 닫기
+  //               draftNameController.text = "";
+  //             },
+  //             child: Container(
+  //               padding:
+  //                   const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+  //               decoration: BoxDecoration(
+  //                   borderRadius: BorderRadius.circular(8), color: Colors.grey),
+  //               child: const Text(
+  //                 '취소',
+  //                 style: TextStyle(color: Colors.white),
+  //               ),
+  //             ),
+  //           ),
+  //           InkWell(
+  //             onTap: () {
+  //               if (draftNameController.text.isNotEmpty) {
+  //                 draftNameController.text = "";
+  //                 Navigator.of(context).pop();
+  //                 //Post request
+  //               }
+  //             },
+  //             child: Container(
+  //               padding:
+  //                   const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+  //               decoration: BoxDecoration(
+  //                 borderRadius: BorderRadius.circular(8),
+  //                 color: Colors.indigo,
+  //               ),
+  //               child: const Text(
+  //                 '확인',
+  //                 style: TextStyle(color: Colors.white),
+  //               ),
+  //             ),
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
+    double width = MediaQuery.of(context).size.width;
+    double height = MediaQuery.of(context).size.height;
+
     return Consumer<DraftModel>(builder: (context, provider, child) {
-      modelText = provider.draft;
-      modelTextcontroller.text = provider.draft;
-      return SelectionArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SelectionArea(
+            onSelectionChanged: (value) {
+              selectedText = value?.plainText ?? "";
+            },
+            child: Container(
               decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(8)),
+                border: Border.all(color: Colors.grey),
+                // borderRadius: BorderRadius.circular(8)
+              ),
               child: Column(
                 children: [
                   const SizedBox(
@@ -210,21 +172,30 @@ class _DraftState extends State<Draft> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(
-                                width: 12,
-                                height: 24,
-                              ),
-                              const Icon(Icons.circle,
-                                  color: Colors.cyan, size: 18),
-                              const Icon(Icons.circle,
-                                  color: Colors.lightBlue, size: 18),
-                              Icon(Icons.circle,
-                                  color: Colors.indigo.shade700, size: 18),
-                            ],
-                          ),
+                          provider.isTrained
+                              ? Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(
+                                      width: 12,
+                                      height: 24,
+                                    ),
+                                    const Icon(Icons.circle,
+                                        color: Colors.cyan, size: 14),
+                                    const Icon(Icons.circle,
+                                        color: Colors.lightBlue, size: 14),
+                                    Icon(Icons.circle,
+                                        color: Colors.indigo.shade700,
+                                        size: 14),
+                                  ],
+                                )
+                              : JumpingDots(
+                                  numberOfDots: 3,
+                                  color: Colors.grey,
+                                  verticalOffset: -5,
+                                  animationDuration:
+                                      const Duration(milliseconds: 800),
+                                ),
                           !provider.isTrained
                               ? Container()
                               : isEdit
@@ -233,16 +204,33 @@ class _DraftState extends State<Draft> {
                                           CrossAxisAlignment.end,
                                       mainAxisAlignment: MainAxisAlignment.end,
                                       children: [
+                                        Container(
+                                          constraints: BoxConstraints(
+                                              maxWidth: width > 700
+                                                  ? double.infinity
+                                                  : 224),
+                                          child: MarkdownToolbar(
+                                            height: 24,
+                                            width: 24,
+                                            iconSize: 18,
+                                            dropdownTextColor: Colors.black,
+                                            useIncludedTextField: false,
+                                            controller: markdownController,
+                                            focusNode: markdownFocusnode,
+                                          ),
+                                        ),
+                                        const SizedBox(
+                                          width: 12,
+                                        ),
                                         Align(
                                             alignment: Alignment.bottomCenter,
                                             child: InkWell(
                                                 onTap: () {
+                                                  provider.setDraft(
+                                                      markdownController.text,
+                                                      widget.draftId);
                                                   setState(() {
-                                                    modelText =
-                                                        markdownController.text;
                                                     isEdit = false;
-                                                    provider
-                                                        .setDraft(modelText);
                                                   });
                                                 },
                                                 child: const Icon(Icons.check,
@@ -253,7 +241,7 @@ class _DraftState extends State<Draft> {
                                     )
                                   : Row(
                                       crossAxisAlignment:
-                                          CrossAxisAlignment.end,
+                                          CrossAxisAlignment.center,
                                       mainAxisAlignment: MainAxisAlignment.end,
                                       children: [
                                         Align(
@@ -262,10 +250,8 @@ class _DraftState extends State<Draft> {
                                                 onTap: () {
                                                   setState(() {
                                                     markdownController.text =
-                                                        modelText;
+                                                        provider.draft;
                                                     isEdit = true;
-                                                    provider
-                                                        .setDraft(modelText);
                                                   });
                                                 },
                                                 child: const Icon(Icons.edit,
@@ -275,7 +261,16 @@ class _DraftState extends State<Draft> {
                                         Align(
                                             alignment: Alignment.bottomCenter,
                                             child: InkWell(
-                                                onTap: _handleNewChatPressed,
+                                                onTap: () async {
+                                                  setState(() {
+                                                    _loading = true;
+                                                  });
+                                                  await provider.reGenDraft(
+                                                      widget.draftId);
+                                                  setState(() {
+                                                    _loading = false;
+                                                  });
+                                                },
                                                 child: const Icon(Icons.refresh,
                                                     color: Colors.white,
                                                     size: 24))),
@@ -284,23 +279,33 @@ class _DraftState extends State<Draft> {
                                             alignment: Alignment.bottomCenter,
                                             child: InkWell(
                                                 onTap: () {
-                                                  Clipboard.setData(
-                                                      ClipboardData(
-                                                          text: modelText));
+                                                  provider.copyDraft(
+                                                      provider.draft);
                                                 },
-                                                child: const Icon(Icons.copy,
+                                                child: Icon(
+                                                    provider.isCopied
+                                                        ? Icons.check
+                                                        : Icons.copy,
                                                     color: Colors.white,
                                                     size: 22))),
                                         const SizedBox(width: 12),
                                         Align(
                                             alignment: Alignment.bottomCenter,
                                             child: InkWell(
-                                                onTap: () {
-                                                  _showSetNewProjectNameDialog(
-                                                      context);
+                                                onTap: () async {
+                                                  ProjectAPI.downloadDraft(
+                                                      widget.draftId,
+                                                      widget.projectName);
+                                                  // if (await canLaunchUrl(
+                                                  //     link)) {
+                                                  //   await launchUrl(
+                                                  //       link); // URL을 엽니다.
+                                                  // } else {
+                                                  //   throw 'Could not launch $link';
+                                                  // }
                                                 },
                                                 child: const Icon(
-                                                    Icons.save_outlined,
+                                                    Icons.download,
                                                     color: Colors.white,
                                                     size: 22))),
                                         const SizedBox(width: 12),
@@ -315,113 +320,127 @@ class _DraftState extends State<Draft> {
                   ),
                   Container(
                       width: double.infinity,
-                      decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(4)),
-                      height: MediaQuery.of(context).size.height / 1.5,
-                      child: content(modelText)),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                      ),
+                      height: height / 1 - 256,
+                      child: content(provider.draft)),
                 ],
               ),
             ),
-            Container(
-              padding: const EdgeInsets.only(top: 10),
-              constraints: const BoxConstraints(
-                maxHeight: 224,
-              ),
-              width: double.infinity,
-              child: SingleChildScrollView(
-                reverse: true,
-                child: Column(
-                  children: [
-                    Container(
-                      height: 12,
-                      color: Colors.transparent,
-                    ),
-                    Row(
-                      children: [
-                        SizedBox(
-                          width: MediaQuery.of(context).size.width / 96,
-                        ),
-                        Expanded(
-                          child: SingleChildScrollView(
-                            reverse: true,
-                            child: Container(
-                              constraints: const BoxConstraints(maxHeight: 90),
-                              child: TextField(
-                                enabled: provider.isTrained,
-                                onSubmitted: (text) {
-                                  if (!_loading) {
-                                    sendMessage(text);
-                                  }
-                                },
-                                textInputAction: TextInputAction.go,
-                                cursorColor: Colors.grey,
-                                controller: textcontroller,
-                                style: const TextStyle(color: Colors.white),
-                                decoration: InputDecoration(
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: const BorderSide(
-                                      color: Colors.grey,
-                                      width: 1.0,
-                                    ),
-                                    borderRadius: BorderRadius.circular(20),
+          ),
+          Container(
+            padding: const EdgeInsets.only(top: 10),
+            constraints: const BoxConstraints(
+              maxHeight: 224,
+            ),
+            width: double.infinity,
+            child: SingleChildScrollView(
+              reverse: true,
+              child: Column(
+                children: [
+                  Container(
+                    height: 12,
+                    color: Colors.transparent,
+                  ),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: width > 700 ? width / 9 : width / 36,
+                      ),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          reverse: true,
+                          child: Container(
+                            constraints: const BoxConstraints(maxHeight: 90),
+                            child: TextField(
+                              autofocus: true,
+                              enabled: provider.isTrained,
+                              onSubmitted: (text) async {
+                                if (!_loading) {
+                                  textcontroller.clear();
+                                  provider.editDraftwithAI(
+                                      widget.draftId, text, selectedText);
+                                }
+                              },
+                              textInputAction: TextInputAction.go,
+                              cursorColor: Colors.grey,
+                              controller: textcontroller,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: InputDecoration(
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: const BorderSide(
+                                    color: Colors.grey,
+                                    width: 1.0,
                                   ),
-                                  hintText: "AI에게 요청해보세요",
-                                  hintStyle:
-                                      TextStyle(color: Colors.grey.shade600),
-                                  border: OutlineInputBorder(
-                                    borderSide: const BorderSide(
-                                      color: Colors.grey,
-                                      width: 1.0,
-                                    ),
-                                    borderRadius: BorderRadius.circular(20),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                hintText: provider.isTrained
+                                    ? "수정하고 싶으신 부분을 드래그 후 AI에게 요청해보세요"
+                                    : provider.embeddingComplete
+                                        ? "아직 초안을 작성 중이에요!"
+                                        : "자료들을 학습하고 있어요!",
+                                hintStyle:
+                                    TextStyle(color: Colors.grey.shade600),
+                                border: OutlineInputBorder(
+                                  borderSide: const BorderSide(
+                                    color: Colors.grey,
+                                    width: 1.0,
                                   ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderSide: const BorderSide(
-                                      color: Colors.grey,
-                                      width: 1.0,
-                                    ),
-                                    borderRadius: BorderRadius.circular(20),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide: const BorderSide(
+                                    color: Colors.grey,
+                                    width: 1.0,
                                   ),
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(
-                          width: 15,
-                        ),
-                        ElevatedButton(
-                          onPressed: _loading || !provider.isTrained
-                              ? null
-                              : () {
-                                  sendMessage(textcontroller.text);
-                                },
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size(50, 50),
-                            backgroundColor:
-                                _loading ? Colors.grey : Colors.transparent,
-                            shape: RoundedRectangleBorder(
-                              side: const BorderSide(color: Colors.grey),
-                              borderRadius:
-                                  BorderRadius.circular(10), // 모서리를 둥글게 조정
-                            ),
+                      ),
+                      const SizedBox(
+                        width: 15,
+                      ),
+                      ElevatedButton(
+                        onPressed: _loading || !provider.isTrained
+                            ? null
+                            : () {
+                                final text = textcontroller.text;
+                                textcontroller.clear();
+                                provider.editDraftwithAI(
+                                    widget.draftId, text, selectedText);
+                              },
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size(50, 50),
+                          backgroundColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            side: BorderSide(
+                                color: provider.isTrained
+                                    ? Colors.grey
+                                    : Colors.transparent),
+                            borderRadius:
+                                BorderRadius.circular(10), // 모서리를 둥글게 조정
                           ),
-                          child: const Icon(
-                            Icons.send,
-                            color: Colors.white,
-                            size: 18,
-                          ),
                         ),
-                        const SizedBox(width: 12),
-                      ],
-                    ),
-                  ],
-                ),
+                        child: Icon(
+                          Icons.send,
+                          color: _loading || !provider.isTrained
+                              ? Colors.grey
+                              : Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                      SizedBox(width: width > 700 ? width / 9 : width / 36),
+                    ],
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       );
     });
   }
@@ -433,25 +452,54 @@ class _DraftState extends State<Draft> {
             ? SingleChildScrollView(
                 child: Column(
                   children: [
-                    MarkdownToolbar(
-                      useIncludedTextField: false,
-                      controller: markdownController,
-                      focusNode: markdownFocusnode,
-                    ),
                     TextField(
-                      maxLines: null,
+                      maxLines: 500,
+                      style: const TextStyle(color: Colors.black),
                       controller: markdownController, // Add the _controller
                       focusNode: markdownFocusnode, // Add the _focusNode
+                      decoration: const InputDecoration(
+                        fillColor: Colors.white,
+                        filled: true,
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Colors.white,
+                            width: 1.0,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Colors.white,
+                            width: 1.0,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.all(18.0),
+                      ),
                     ),
                   ],
                 ),
               )
             : Container(
-                margin: const EdgeInsets.all(10.0),
-                child: Markdown(
-                  controller: markdownscroll,
-                  data: message,
-                  styleSheet: MarkdownStyleSheet(),
+                margin: EdgeInsets.symmetric(
+                    horizontal:
+                        MediaQuery.of(context).size.width > 700 ? 72.0 : 24,
+                    vertical: 8.0),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Markdown(
+                    controller: markdownscroll,
+                    data: message,
+                    styleSheet: MarkdownStyleSheet(
+                      h1: const TextStyle(
+                          color: Colors.black, fontWeight: FontWeight.w700),
+                      h1Padding: const EdgeInsets.symmetric(vertical: 20),
+                      h2: const TextStyle(
+                          color: Colors.black, fontWeight: FontWeight.w600),
+                      h2Padding: const EdgeInsets.symmetric(vertical: 14),
+                      h3: const TextStyle(
+                          color: Colors.black, fontWeight: FontWeight.w500),
+                      h3Padding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                  ),
                 ),
               ));
   }

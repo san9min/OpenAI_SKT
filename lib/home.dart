@@ -21,6 +21,7 @@ class _HomeState extends State<Home> {
   bool login = false;
   String? userName;
   String? userImg;
+
   bool isLoginButtonHovered = false;
   bool isSignUpButtonHovered = false;
 
@@ -34,10 +35,6 @@ class _HomeState extends State<Home> {
 
   void checkLogin(BuildContext context) async {
     var cookie = Cookie.create();
-    // cookie.set('access_token',
-    //     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo3LCJleHAiOjE3Mjk3OTgwNzIsImlhdCI6MTY5Mzc5ODA3Mi4xNDgxMzR9.8amMkPHOdkIGZFuX70AxcEM4MioWxpXRoPdrTw7rX8g');
-    // cookie.set('refresh_token',
-    //     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo3LCJleHAiOjE3Mjk3OTgwNzIsImlhdCI6MTY5Mzc5ODA3Mi4xNDgxMzQsInR5cGUiOiJyZWZyZXNoIn0.4SVhFVvUbqvtoDsLJCABfnwBkpa-G3FMiKORSeC3Oqk');
     var accessToken = cookie.get('access_token');
     var refreshToken = cookie.get('refresh_token');
 
@@ -52,9 +49,10 @@ class _HomeState extends State<Home> {
           "/auth/login",
         );
       } else {
-        projectList =
+        final helperPl =
             await ProjectAPI.getProjectList(accessToken, refreshToken);
         setState(() {
+          projectList = helperPl.reversed.toList();
           userName = userNameImg['name'];
           userImg = userNameImg['user_image'];
           login = true;
@@ -68,16 +66,15 @@ class _HomeState extends State<Home> {
   Future<void> startLandingText() async {
     List<LandingText> landingtextList = [
       LandingText(
-          title: "Research Agent", content_text: "자료 조사를 도와주는 나만의 Agent"),
+          title: "자료조사 Tool",
+          content_text: "온라인 자료조사, 이제 Generative AI와 함께하세요!"),
       LandingText(
-          title: "Article Sketching",
-          content_text: "프로젝트의 주제와 목적에 맞게 전체 흐름을 제안하고, 목차를 작성"),
+          title: "당신만의 자료조사 Agent",
+          content_text: "글, 그림부터 영상까지\n다양한 유형의 자료를 이해하고 질문에 답해드려요!"),
       LandingText(
-          title: "Refernce Searching",
-          content_text: "각 목차의 근거와 관련 자료를 \n여러 웹사이트에서 검색 후 제안"),
-      LandingText(
-          title: "Draft & Visual Data Generation",
-          content_text: "목차와 자료를 바탕으로한 초안 작성과\n자연어를 통한 시각 자료 생성")
+          title: "당신만의 자료조사 Agent",
+          content_text: "글 초안 작성부터 수정, 도표 생성까지 \n간단한 명령어로 자료를 보완해보세요!"),
+      //LandingText(title: "당신만의 자료조사 Agent", content_text: "audrey를 통해 더 효")
     ];
     while (!login) {
       for (final ltext in landingtextList) {
@@ -89,6 +86,7 @@ class _HomeState extends State<Home> {
   }
 
   Future<void> streamingLandingText(String landerString) async {
+    await Future.delayed(const Duration(milliseconds: 100));
     for (var char in landerString.split('')) {
       await Future.delayed(const Duration(milliseconds: 50));
       setState(() {
@@ -126,12 +124,17 @@ class _HomeState extends State<Home> {
                   var accessToken = cookie.get('access_token');
                   var refreshToken = cookie.get('refresh_token');
 
-                  projectList = await ProjectAPI.getProjectList(
+                  final helperPl = await ProjectAPI.getProjectList(
                       accessToken!, refreshToken!);
-                  setState(() {});
+
+                  setState(() {
+                    projectList = helperPl.reversed.toList();
+                  });
                 }
 
                 Navigator.of(context).pop(); // 다이얼로그 닫기
+                if (!mounted) return;
+                MyFluroRouter.router.navigateTo(context, '/', replace: true);
               },
               child: Container(
                 padding:
@@ -205,18 +208,23 @@ class _HomeState extends State<Home> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text("Delete account",
-                            style: TextStyle(color: Colors.white)),
+                            style:
+                                TextStyle(color: Colors.white, fontSize: 18)),
                         InkWell(
                           onTap: () {
                             var cookie = Cookie.create();
                             cookie.remove('access_token');
                             cookie.remove('refresh_token');
                             UserInfo.deleteUserInfo(accessToken);
+
                             Navigator.of(context).pop(); // 다이얼로그 닫기
+                            if (!mounted) return;
+                            MyFluroRouter.router
+                                .navigateTo(context, '/', replace: true);
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 24, vertical: 12),
+                                horizontal: 12, vertical: 8),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(8),
                               color: Colors.red.shade700,
@@ -322,30 +330,77 @@ class _HomeState extends State<Home> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("My Projects",
-                        style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white)),
+                    const Text("📝 나의 프로젝트",
+                        style: TextStyle(fontSize: 20, color: Colors.white)),
                     const SizedBox(
                       height: 12,
                     ),
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width > 700
-                          ? MediaQuery.of(context).size.width / 2
-                          : MediaQuery.of(context).size.width / 1.2,
-                      height: MediaQuery.of(context).size.height / 1.5,
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: projectList.length, // 프로젝트 카드의 개수
-                        itemBuilder: (context, index) {
-                          return ProjectCard(
-                            projectList[index].project_name,
-                            projectList[index].id,
-                          );
-                        },
+                    if (projectList.isEmpty)
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width / 1.2,
+                        height: MediaQuery.of(context).size.height / 1.5,
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // const Text(
+                              //   "자료조사 Agent에게 도움을 받으세요",
+                              //   style: TextStyle(color: Colors.grey, fontSize: 18),
+                              // ),
+                              const SizedBox(height: 12),
+                              InkWell(
+                                onTap: () {
+                                  login
+                                      ? MyFluroRouter.router.navigateTo(
+                                          context,
+                                          "/build",
+                                        )
+                                      : MyFluroRouter.router.navigateTo(
+                                          context, "/auth/login",
+                                          routeSettings: const RouteSettings(
+                                              arguments: false));
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                    horizontal: 30,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Colors.blue,
+                                        Colors.lightBlue,
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    "시작하기",
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                              ),
+                            ]),
                       ),
-                    )
+                    if (projectList.isNotEmpty)
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height / 1.4,
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: projectList.length, // 프로젝트 카드의 개수
+                          itemBuilder: (context, index) {
+                            return projectListCard(
+                              projectList[index].project_name,
+                              projectList[index].id,
+                              projectList[index].purpose,
+                            );
+                          },
+                        ),
+                      )
                   ],
                 ),
               )
@@ -378,7 +433,7 @@ class _HomeState extends State<Home> {
                         Text(landingtext.content_text,
                             style: const TextStyle(
                                 fontSize: 32,
-                                color: Colors.white70,
+                                color: Colors.white,
                                 fontWeight: FontWeight.w500)),
                         SizedBox(
                           height: MediaQuery.of(context).size.height / 5,
@@ -464,67 +519,176 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget ProjectCard(String name, int id) {
+  // Widget ProjectCard(String name, int id) {
+  //   return Padding(
+  //     padding: const EdgeInsets.all(12.0),
+  //     child: SizedBox(
+  //       child: Column(
+  //         children: [
+  //           Stack(
+  //             children: [
+  //               InkWell(
+  //                 onTap: () async {
+  //                   int draftId = await ProjectAPI.getProjectLastDraft(id);
+  //                   if (!mounted) return;
+  //                   if (draftId == -1) {
+  //                   } else {
+  //                     MyFluroRouter.router
+  //                         .navigateTo(context, '/edit/$name/$id',
+  //                             routeSettings: RouteSettings(arguments: {
+  //                               "draftId": draftId,
+  //                               "projectName": name,
+  //                               "projectId": id,
+  //                             }));
+  //                   }
+  //                 },
+  //                 child: Row(
+  //                   crossAxisAlignment: CrossAxisAlignment.center,
+  //                   children: [
+  //                     Stack(
+  //                       alignment: Alignment.center,
+  //                       children: [
+  //                         Container(
+  //                           width: 18, // 원의 지름
+  //                           height: 18, // 원의 지름
+  //                           decoration: BoxDecoration(
+  //                               shape: BoxShape.circle,
+  //                               color: Colors.transparent, // 채워진 원의 색상
+  //                               border:
+  //                                   Border.all(width: 1, color: Colors.white)),
+  //                         ),
+  //                         Positioned(
+  //                           left: 3, // 내부 원의 가로 위치 조절
+  //                           top: 3, // 내부 원의 세로 위치 조절
+  //                           child: Container(
+  //                             width: 12, // 내부 원의 지름
+  //                             height: 12, // 내부 원의 지름
+  //                             decoration: const BoxDecoration(
+  //                               shape: BoxShape.circle,
+  //                               color: Colors.white, // 내부 원의 색상
+  //                             ),
+  //                           ),
+  //                         ),
+  //                       ],
+  //                     ),
+  //                     const SizedBox(
+  //                       width: 12,
+  //                     ),
+  //                     Text(
+  //                       name,
+  //                       style: const TextStyle(
+  //                           color: Colors.white,
+  //                           fontSize: 18,
+  //                           fontWeight: FontWeight.bold),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+  //               Positioned(
+  //                   right: 24,
+  //                   child: InkWell(
+  //                     onTap: () async {
+  //                       _showDeleteConfirmationDialog(context, id);
+  //                     },
+  //                     child: Container(
+  //                       padding: const EdgeInsets.symmetric(
+  //                           horizontal: 12, vertical: 3),
+  //                       decoration: BoxDecoration(
+  //                         borderRadius: BorderRadius.circular(8),
+  //                         color: Colors.red.shade700,
+  //                       ),
+  //                       child: const Text(
+  //                         'Delete',
+  //                         style: TextStyle(color: Colors.white),
+  //                       ),
+  //                     ),
+  //                   ))
+  //             ],
+  //           ),
+  //           const Divider(
+  //             color: Colors.grey,
+  //           )
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  Widget projectListCard(String name, int id, String purpose) {
     return Padding(
-      padding: const EdgeInsets.all(12.0),
-      child: SizedBox(
-        child: Column(
-          children: [
-            Stack(
-              children: [
-                InkWell(
-                  onTap: () async {
-                    int draftId = await ProjectAPI.getProjectLastDraft(id);
-                    if (!mounted) return;
-                    if (draftId == -1) {
-                    } else {
-                      MyFluroRouter.router
-                          .navigateTo(context, '/edit/$name/$id',
-                              routeSettings: RouteSettings(arguments: {
-                                "draftId": draftId,
-                                "projectName": name,
-                                "projectId": id,
-                              }));
-                    }
-                  },
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.adjust_rounded,
-                        color: Colors.grey,
-                      ),
-                      const SizedBox(
-                        width: 12,
-                      ),
-                      Text(
-                        name,
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 18),
-                      ),
+        padding: const EdgeInsets.all(8.0),
+        child: InkWell(
+          onTap: () async {
+            int draftId = await ProjectAPI.getProjectLastDraft(id);
+            if (!mounted) return;
+            if (draftId == -1) {
+            } else {
+              MyFluroRouter.router.navigateTo(
+                context, '/edit/${Uri.encodeFull(name)}/$id/$draftId',
+                // routeSettings: RouteSettings(arguments: {
+                //   "draftId": draftId,
+                //   "projectName": name,
+                //   "projectId": id,
+                // })
+              );
+            }
+          },
+          child: Card(
+            elevation: 12.0,
+            margin: const EdgeInsets.symmetric(
+              horizontal: 6.0,
+            ),
+            child: Container(
+              decoration:
+                  const BoxDecoration(color: Color.fromARGB(244, 46, 50, 52)),
+              child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12.0, vertical: 0.0),
+                  leading: Container(
+                    padding: const EdgeInsets.only(right: 12.0),
+                    decoration: const BoxDecoration(
+                        border: Border(
+                            right:
+                                BorderSide(width: 1.0, color: Colors.white24))),
+                    child:
+                        const Icon(Icons.circle, color: Colors.white, size: 18),
+                  ),
+                  title: Text(
+                    name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      //fontSize: 18,
+                    ),
+                  ),
+                  subtitle: Row(
+                    children: <Widget>[
+                      const Icon(Icons.linear_scale_outlined,
+                          color: Colors.blueAccent),
+                      const SizedBox(width: 8),
+                      Text(purpose,
+                          style: TextStyle(color: Colors.grey.shade600))
                     ],
                   ),
-                ),
-                Positioned(
-                    right: 24,
-                    child: InkWell(
-                      onTap: () async {
-                        _showDeleteConfirmationDialog(context, id);
-                      },
-                      child: const Icon(
-                        Icons.delete_outlined,
-                        color: Colors.grey,
+                  trailing: InkWell(
+                    onTap: () async {
+                      _showDeleteConfirmationDialog(context, id);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.red.shade700,
                       ),
-                    ))
-              ],
+                      child: const Text(
+                        'Delete',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  )),
             ),
-            const Divider(
-              color: Colors.grey,
-            )
-          ],
-        ),
-      ),
-    );
+          ),
+        ));
   }
 
   Widget LoginButton() {
@@ -604,9 +768,12 @@ class _HomeState extends State<Home> {
           name,
           style: const TextStyle(color: Colors.white),
         ),
-        iconColor: Colors.white70,
+        //iconColor:
         initiallyExpanded: false,
-        trailing: const Icon(Icons.expand_more_rounded),
+        trailing: Icon(
+          Icons.expand_more_rounded,
+          color: isExpansion ? Colors.white : Colors.white70,
+        ),
         onExpansionChanged: (exapnsion) {
           setState(() {
             isExpansion = exapnsion;
@@ -646,7 +813,7 @@ class _HomeState extends State<Home> {
                         onTap: () {
                           var cookie = Cookie.create();
                           final accessToken = cookie.get("access_token");
-                          print(accessToken);
+
                           _showSettingsDialog(context, accessToken!);
                           // cookie.remove('access_token');
                         },
@@ -671,7 +838,7 @@ class _HomeState extends State<Home> {
                         ),
                       ),
                     ),
-                    LogOutBttn()
+                    logOutButton()
                   ],
                 )),
           ),
@@ -680,7 +847,7 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget LogOutBttn() {
+  Widget logOutButton() {
     return Container(
       decoration: const BoxDecoration(
         border: Border(
