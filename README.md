@@ -1,5 +1,5 @@
 <br>
-<p align="center"><a href="https://audrey.kr/"><img width=100% src="https://github.com/san9min/OpenAI_SKT/assets/92682815/f5c8d072-94ef-4816-8a45-0319d1780671" alt="logo"></a></p>
+<p align="center"><a href="https://audrey.kr/"><img width=100% src="https://github.com/san9min/OpenAI_SKT/assets/92682815/15fc53df-8a49-4c1d-a825-0ed026fefd31" alt="logo"></a></p>
 <h4 align="center">
  <a href="https://github.com/san9min/OpenAI_SKT">AI</a> &nbsp;&nbsp; | &nbsp;&nbsp; <a href="">Frontend</a> &nbsp;&nbsp; | &nbsp;&nbsp; <a href="https://github.com/audreyaiai/OpenAI_SKT_BE">Backend</a>
 </h4>
@@ -7,8 +7,15 @@
 
 
 
+
 # audrey.ai
 
+
+
+
+
+# Chunking Strategy
+![audrey AI_본선](https://github.com/san9min/OpenAI_SKT/assets/92682815/d3805e72-64a9-4571-a64e-29ac4b73b897)
 
 
 <!-- FOOTER START -->
