@@ -33,7 +33,7 @@ In summary, our AI-powered online research tool aims to enhance the productivity
 
 
 ## Chunking Strategy
-<p align="center"><img width=80% src="https://github.com/san9min/OpenAI_SKT/assets/92682815/d3805e72-64a9-4571-a64e-29ac4b73b897" alt="chunking"></p>
+<p align="center"><img width=100% src="https://github.com/san9min/OpenAI_SKT/assets/92682815/d3805e72-64a9-4571-a64e-29ac4b73b897" alt="chunking"></p>
 We conducted extensive preprocessing to ensure that GPT could better understand the data. This involved removing noise information and incorporating visual data to comprehend context and structural details.
 
 
