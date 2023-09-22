@@ -47,7 +47,8 @@ We conducted extensive preprocessing to ensure that GPT could better understand 
 
 
 We obtained official authorization and fine-tuned Faster RCNN on a dataset comprising 200 images from the **통계청 (Korean Statistical Office)** and **정부 브리핑 (Government Briefings)**. 
-Through this process, we are able to divide each chunk into the following categories by utilizing the information
+Through this process, we are able to divide each chunk into the following categories by utilizing the visual information
+<p align="center">
 
 | Category            | Description                                                         |
 |:---------------------:|:---------------------------------------------------------------------:|
@@ -59,7 +60,7 @@ Through this process, we are able to divide each chunk into the following catego
 | Table               | Understanding tabular data structures.                             |
 | Table Caption       | Recognizing and comprehending captions associated with tables.     |
 | Comment             | Identifying and understanding comments or annotations within the content. |
-
+</p>
 This comprehensive preprocessing and fine-tuning approach enhances GPT's ability to process and categorize information effectively, making it more proficient in analyzing textual and visual data in a structured manner.
 
 
