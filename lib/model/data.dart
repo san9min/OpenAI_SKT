@@ -11,3 +11,9 @@ class FileData {
     required this.contents,
   });
 }
+
+class DalleImage {
+  int imageId;
+  String link;
+  DalleImage({required this.imageId, required this.link});
+}

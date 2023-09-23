@@ -60,89 +60,6 @@ class _DraftState extends State<Draft> {
     super.dispose();
   }
 
-  // void _showSetNewProjectNameDialog(BuildContext context) {
-  //   showDialog(
-  //     context: context,
-  //     builder: (context) {
-  //       return AlertDialog(
-  //         title: const Text("저장하기"),
-  //         content: Container(
-  //           constraints: const BoxConstraints(maxHeight: 64),
-  //           child: Column(
-  //             crossAxisAlignment: CrossAxisAlignment.start,
-  //             children: [
-  //               TextField(
-  //                 controller: draftNameController,
-  //                 cursorColor: Colors.grey.shade600,
-  //                 decoration: const InputDecoration(
-  //                   fillColor: Colors.white,
-  //                   filled: true,
-  //                   enabledBorder: OutlineInputBorder(
-  //                     borderSide: BorderSide(
-  //                       color: Colors.grey,
-  //                       width: 1.0,
-  //                     ),
-  //                   ),
-  //                   focusedBorder: OutlineInputBorder(
-  //                     borderSide: BorderSide(
-  //                       color: Colors.grey,
-  //                       width: 1.0,
-  //                     ),
-  //                   ),
-  //                   hintText: "Report 이름을 입력해주세요",
-  //                   contentPadding: EdgeInsets.all(18.0),
-  //                 ),
-  //               ),
-  //               const SizedBox(
-  //                 height: 12,
-  //               )
-  //             ],
-  //           ),
-  //         ),
-  //         actions: [
-  //           InkWell(
-  //             onTap: () {
-  //               Navigator.of(context).pop(); // 다이얼로그 닫기
-  //               draftNameController.text = "";
-  //             },
-  //             child: Container(
-  //               padding:
-  //                   const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-  //               decoration: BoxDecoration(
-  //                   borderRadius: BorderRadius.circular(8), color: Colors.grey),
-  //               child: const Text(
-  //                 '취소',
-  //                 style: TextStyle(color: Colors.white),
-  //               ),
-  //             ),
-  //           ),
-  //           InkWell(
-  //             onTap: () {
-  //               if (draftNameController.text.isNotEmpty) {
-  //                 draftNameController.text = "";
-  //                 Navigator.of(context).pop();
-  //                 //Post request
-  //               }
-  //             },
-  //             child: Container(
-  //               padding:
-  //                   const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-  //               decoration: BoxDecoration(
-  //                 borderRadius: BorderRadius.circular(8),
-  //                 color: Colors.indigo,
-  //               ),
-  //               child: const Text(
-  //                 '확인',
-  //                 style: TextStyle(color: Colors.white),
-  //               ),
-  //             ),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
-
   @override
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
@@ -154,6 +71,7 @@ class _DraftState extends State<Draft> {
         children: [
           SelectionArea(
             onSelectionChanged: (value) {
+              print(value);
               selectedText = value?.plainText ?? "";
             },
             child: Container(
@@ -409,9 +327,13 @@ class _DraftState extends State<Draft> {
                             ? null
                             : () {
                                 final text = textcontroller.text;
-                                textcontroller.clear();
-                                provider.editDraftwithAI(
-                                    widget.draftId, text, selectedText);
+
+                                if (selectedText.isEmpty) {
+                                } else {
+                                  textcontroller.clear();
+                                  provider.editDraftwithAI(
+                                      widget.draftId, text, selectedText);
+                                }
                               },
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(50, 50),

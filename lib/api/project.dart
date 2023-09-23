@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:fetch_client/fetch_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:cookie_wrapper/cookie.dart';
+import 'package:researchtool/model/data.dart';
 import 'package:researchtool/model/project.dart';
 import 'package:researchtool/screens/create.dart';
 import 'package:web_browser_detect/web_browser_detect.dart'; // 파일 경로를 조작하기 위한 패키지
@@ -521,5 +522,67 @@ class ProjectAPI {
     } catch (e) {
       print(e);
     }
+  }
+
+  static Future<DalleImage> genImage(int draftId) async {
+    var cookie = Cookie.create();
+    var accessToken = cookie.get('access_token');
+
+    try {
+      final response = await http.post(
+        Uri.parse('${url}draft/$draftId/image'),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $accessToken"
+        },
+      );
+
+      final res = jsonDecode(response.body);
+
+      return DalleImage(imageId: res['id'], link: res['link']);
+    } catch (error) {
+      print(error);
+      return DalleImage(imageId: -1, link: "");
+    }
+  }
+
+  static Future<List<DalleImage>> getImage(int draftId) async {
+    var cookie = Cookie.create();
+    var accessToken = cookie.get('access_token');
+
+    try {
+      final response = await http.get(
+        Uri.parse('${url}draft/$draftId/image'),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $accessToken"
+        },
+      );
+
+      final res = jsonDecode(response.body);
+      List<DalleImage> result = [];
+      for (final res_i in res) {
+        result.add(DalleImage(imageId: res_i['id'], link: res_i['link']));
+      }
+      return result;
+    } catch (error) {
+      print(error);
+      return [];
+    }
+  }
+
+  static void selectImage(int draftId, int imageId) async {
+    var cookie = Cookie.create();
+    var accessToken = cookie.get('access_token');
+
+    var body = {"image_id": imageId};
+    try {
+      await http.put(Uri.parse('${url}draft/$draftId/image'),
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer $accessToken"
+          },
+          body: jsonEncode(body));
+    } catch (error) {}
   }
 }

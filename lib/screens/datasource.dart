@@ -81,7 +81,7 @@ class _DataSourceScreenState extends State<DataSourceScreen>
   Future<void> _pickAudio() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['mp3'],
+      allowedExtensions: ["mp3", "mp4", "mpeg", "m4a", "wav"],
       allowMultiple: false,
     );
 
@@ -934,7 +934,11 @@ class _DataSourceScreenState extends State<DataSourceScreen>
                             droppedFile.name.split('.').last.toLowerCase();
 
                         // PNG 및 JPG 이미지 파일만 허용
-                        if (extension == 'mp3') {
+                        if (extension == 'mp3' ||
+                            extension == "mp4" ||
+                            extension == "mpeg" ||
+                            extension == "m4a" ||
+                            extension == "wav") {
                           PlatformFile file = PlatformFile(
                             name: droppedFile.name,
                             path: droppedFile.path,
@@ -975,7 +979,7 @@ class _DataSourceScreenState extends State<DataSourceScreen>
                                           color: Colors.grey, fontSize: 14),
                                     ),
                                     Text(
-                                      "지원 파일 형식 : .mp3",
+                                      "지원 파일 형식 : .mp3, .mp4, .mpeg, m4a, .wav",
                                       style: TextStyle(
                                           color: Colors.grey, fontSize: 12),
                                     )

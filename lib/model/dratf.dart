@@ -5,10 +5,11 @@ import 'package:researchtool/api/project.dart';
 class DraftModel with ChangeNotifier {
   String _draft = "";
   // Task가 모두 끝났음을 나타내는 변수 : isTrained
+
   bool _isTrained = false;
   bool _embeddingComplete = false;
   bool _isCopied = false;
-
+  String? _currentThumbnailImage;
   List<dynamic> _table = [];
   List<dynamic> _reference = [];
 
@@ -16,6 +17,7 @@ class DraftModel with ChangeNotifier {
   bool get isTrained => _isTrained;
   bool get isCopied => _isCopied;
   bool get embeddingComplete => _embeddingComplete;
+  String? get currentThumbnailImage => _currentThumbnailImage;
   List<dynamic> get table => _table;
   List<dynamic> get reference => _reference;
 
@@ -23,6 +25,7 @@ class DraftModel with ChangeNotifier {
     _draft = "초안을 생성 중입니다...";
     _isTrained = false;
     _embeddingComplete = false;
+    _currentThumbnailImage = null;
 
     _table = [];
     _reference = [];
@@ -98,6 +101,7 @@ class DraftModel with ChangeNotifier {
     _isTrained = false;
     _reference = [];
     _table = [];
+    _currentThumbnailImage = null;
     final status = await ProjectAPI.getDraftStatus(draftId);
 
     _isTrained = true;
@@ -112,6 +116,7 @@ class DraftModel with ChangeNotifier {
 
     _table = status['table'];
     _reference = status['source'];
+    _currentThumbnailImage = status['image_link'];
     notifyListeners();
   }
 
@@ -160,6 +165,11 @@ ${_draft.substring(0, startIndex)}
   void setDraft(String text, int draftId) {
     _draft = text;
     ProjectAPI.editOnlyDraft(draftId, _draft);
+    notifyListeners();
+  }
+
+  void clickImage(String imageLink) {
+    _currentThumbnailImage = imageLink;
     notifyListeners();
   }
 

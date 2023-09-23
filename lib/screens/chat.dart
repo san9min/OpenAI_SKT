@@ -52,7 +52,15 @@ class _ChatState extends State<Chat> {
   void getChat(projectId) async {
     messages = await ApiService.getChat(projectId);
     setState(
-      () {},
+      () {
+        if (messages.isNotEmpty) {
+          reverseChatController.animateTo(
+            reverseChatController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.linear,
+          );
+        }
+      },
     );
   }
 
@@ -155,6 +163,11 @@ class _ChatState extends State<Chat> {
         messageContent: "",
         messageType: "model",
       ));
+      reverseChatController.animateTo(
+        reverseChatController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.linear,
+      );
     });
 
     final userChat = userInput.trim();
@@ -187,6 +200,11 @@ class _ChatState extends State<Chat> {
 
     setState(() {
       _loading = false;
+      reverseChatController.animateTo(
+        reverseChatController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.linear,
+      );
     });
   }
 

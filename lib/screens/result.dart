@@ -44,6 +44,12 @@ class _ResultScreenState extends State<ResultScreen>
   int _uniqueIdFileCounter = 0;
   int _uniqueIdImageCounter = 0;
 
+  //For using Dall-e
+
+  List<DalleImage?> generatedThumbnailImage = [];
+  int selected_dalle_id = -1;
+  bool generating = false;
+  bool coverImageSaving = false;
   //late
   late String projectName;
   late int draftId;
@@ -95,12 +101,15 @@ class _ResultScreenState extends State<ResultScreen>
 
   void initDraft() async {
     if (draftId == 0) {
+      ProjectAPI.genImage(draftId);
       draftId = await _draftmodelProvider.genDraft(widget.projectId);
       _draftmodelProvider.getDraftStatusforState(draftId);
+      generatedThumbnailImage = await ProjectAPI.getImage(draftId);
       setState(() {
         isTableVisible = true;
       });
     } else {
+      generatedThumbnailImage = await ProjectAPI.getImage(draftId);
       _draftmodelProvider.getDraftStatusforState(draftId);
       setState(() {
         isTableVisible = true;
@@ -605,53 +614,8 @@ class _ResultScreenState extends State<ResultScreen>
           const SizedBox(
             height: 12,
           ),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(width: 12),
-              Container(
-                  width: 84,
-                  height: 20,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    // border: Border.all(
-                    //     color: _draftmodelProvider.embeddingComplete ||
-                    //             _draftmodelProvider.isTrained
-                    //         ? Colors.grey.shade400
-                    //         : Colors.red.shade600)
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      _draftmodelProvider.embeddingComplete ||
-                              _draftmodelProvider.isTrained
-                          ? Icon(Icons.refresh,
-                              size: 20, color: Colors.grey.shade400)
-                          : SizedBox(
-                              width: 14,
-                              height: 14,
-                              child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.red.shade600),
-                              ),
-                            ),
-                      Text(
-                        "  학습중",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: _draftmodelProvider.embeddingComplete ||
-                                  _draftmodelProvider.isTrained
-                              ? Colors.grey.shade400
-                              : Colors.red.shade600,
-                        ),
-                      ),
-                    ],
-                  )),
-              const SizedBox(width: 12),
-              Container(
+          _draftmodelProvider.embeddingComplete || _draftmodelProvider.isTrained
+              ? Container(
                   width: 84,
                   height: 20,
                   alignment: Alignment.center,
@@ -683,9 +647,43 @@ class _ResultScreenState extends State<ResultScreen>
                                 : Colors.grey.shade400),
                       ),
                     ],
+                  ))
+              : Container(
+                  width: 84,
+                  height: 20,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    // border: Border.all(
+                    //     color: _draftmodelProvider.embeddingComplete ||
+                    //             _draftmodelProvider.isTrained
+                    //         ? Colors.grey.shade400
+                    //         : Colors.red.shade600)
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.red.shade600),
+                        ),
+                      ),
+                      Text(
+                        "  학습중",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _draftmodelProvider.embeddingComplete ||
+                                  _draftmodelProvider.isTrained
+                              ? Colors.grey.shade400
+                              : Colors.red.shade600,
+                        ),
+                      ),
+                    ],
                   )),
-            ],
-          ),
           const SizedBox(height: 18),
           SizedBox(
               height: btnHeight,
@@ -741,22 +739,49 @@ class _ResultScreenState extends State<ResultScreen>
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
+                    _draftmodelProvider.embeddingComplete ||
+                            _draftmodelProvider.isTrained
+                        ? Container(
+                            width: 84,
+                            height: 20,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Icon(Icons.check,
+                                    size: 20,
+                                    color:
+                                        _draftmodelProvider.embeddingComplete ||
+                                                _draftmodelProvider.isTrained
+                                            ? Colors.lightGreen
+                                            : Colors.grey.shade400),
+                                Text(
+                                  " 학습완료",
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: _draftmodelProvider
+                                                  .embeddingComplete ||
+                                              _draftmodelProvider.isTrained
+                                          ? Colors.lightGreen
+                                          : Colors.grey.shade400),
+                                ),
+                              ],
+                            ))
+                        : Container(
                             width: 84,
                             height: 20,
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(8),
                               // border: Border.all(
-                              //     color:
-                              //         _draftmodelProvider.embeddingComplete ||
-                              //                 _draftmodelProvider.isTrained
-                              //             ? Colors.grey.shade400
-                              //             : Colors.red.shade600)
+                              //     color: _draftmodelProvider.embeddingComplete ||
+                              //             _draftmodelProvider.isTrained
+                              //         ? Colors.grey.shade400
+                              //         : Colors.red.shade600)
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -788,45 +813,6 @@ class _ResultScreenState extends State<ResultScreen>
                                 ),
                               ],
                             )),
-                        const SizedBox(width: 8),
-                        Container(
-                            width: 84,
-                            height: 20,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              //border: Border.all(
-                              // color:
-                              //     _draftmodelProvider.embeddingComplete ||
-                              //             _draftmodelProvider.isTrained
-                              //         ? Colors.lightGreen
-                              //         : Colors.grey.shade400)
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Icon(Icons.check,
-                                    size: 20,
-                                    color:
-                                        _draftmodelProvider.embeddingComplete ||
-                                                _draftmodelProvider.isTrained
-                                            ? Colors.lightGreen
-                                            : Colors.grey.shade400),
-                                Text(
-                                  " 학습완료",
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      color: _draftmodelProvider
-                                                  .embeddingComplete ||
-                                              _draftmodelProvider.isTrained
-                                          ? Colors.lightGreen
-                                          : Colors.grey.shade400),
-                                ),
-                              ],
-                            )),
-                      ],
-                    ),
                   ],
                 ),
               ],
@@ -1157,36 +1143,169 @@ class _ResultScreenState extends State<ResultScreen>
                 Container(
                     color: Colors.transparent,
                     width: (width) / 5,
-                    height: height / 1.2,
+                    height: height,
                     child: Stack(children: [
                       AnimatedPositioned(
                         duration: const Duration(milliseconds: 300),
-                        left: isBoxVisible ? 0 : 200, // 왼쪽으로 이동하여 숨기거나 표시
+                        left: isBoxVisible ? 24 : 200, // 왼쪽으로 이동하여 숨기거나 표시
+                        top: 24,
 
                         child: isBoxVisible
                             ? Container(
-                                height: height / 1.5,
-                                width: (width) / 5,
-                                color: Colors.grey[200],
+                                height: height / 1.3,
+                                width: (width) / 6,
+                                decoration: BoxDecoration(
+                                    color:
+                                        const Color.fromARGB(255, 46, 50, 52),
+                                    borderRadius: BorderRadius.circular(8)),
                                 child: Center(
                                   child: Column(children: [
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            const Spacer(),
+                                            InkWell(
+                                              onTap: () {
+                                                setState(() {
+                                                  isBoxVisible = false;
+                                                });
+                                              },
+                                              child: const Icon(Icons.cancel,
+                                                  color: Colors.black),
+                                            ),
+                                            const SizedBox(width: 12),
+                                          ]),
+                                    ),
+                                    provider.currentThumbnailImage == null
+                                        ? Container(
+                                            width: 128,
+                                            height: 128,
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              color: Colors
+                                                  .grey, // 또는 다른 색상을 지정하세요.
+                                            ),
+                                            child: const Center(
+                                              child: Icon(
+                                                Icons.image,
+                                                size: 36,
+                                                color:
+                                                    Colors.white, // 아이콘의 색상 설정
+                                              ),
+                                            ),
+                                          )
+                                        : Container(
+                                            width: 128,
+                                            height: 128,
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              color: Colors
+                                                  .grey, // 또는 다른 색상을 지정하세요.
+                                            ),
+                                            child: Center(
+                                                child: Image.network(provider
+                                                    .currentThumbnailImage!)),
+                                          ),
+                                    const Padding(
+                                      padding: EdgeInsets.all(8.0),
+                                      child: Divider(
+                                        color: Colors.grey,
+                                      ),
+                                    ),
                                     Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.end,
                                         children: [
-                                          const Spacer(),
                                           InkWell(
-                                            onTap: () {
+                                            onTap: () async {
                                               setState(() {
-                                                isBoxVisible = false;
+                                                generating = true;
+                                              });
+                                              final newImg =
+                                                  await ProjectAPI.genImage(
+                                                      draftId);
+
+                                              setState(() {
+                                                generatedThumbnailImage
+                                                    .add(newImg);
+                                                generating = false;
                                               });
                                             },
-                                            child: const Icon(Icons.cancel,
-                                                color: Colors.black),
+                                            child: const Text("표지 생성 🪄",
+                                                style: TextStyle(
+                                                    color: Colors.white)),
                                           ),
                                           const SizedBox(width: 12),
                                         ]),
-                                    const Text("곧 출시 예정이에요!"),
+                                    const SizedBox(height: 8),
+                                    generating
+                                        ? SizedBox(
+                                            height: (width) / 6,
+                                            child: const Center(
+                                              child: SpinKitCircle(
+                                                size: 24,
+                                                color: Colors.blue,
+                                              ),
+                                            ),
+                                          )
+                                        : Container(
+                                            padding: const EdgeInsets.all(8),
+                                            height: (width) / 6,
+                                            child: GridView.builder(
+                                              gridDelegate:
+                                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                                crossAxisCount: 2,
+                                                // 한 줄에 세 개의 열
+                                              ),
+                                              itemCount: generatedThumbnailImage
+                                                  .length,
+                                              itemBuilder: (context, index) {
+                                                return InkWell(
+                                                  onTap: () {
+                                                    provider.clickImage(
+                                                        generatedThumbnailImage[
+                                                                index]!
+                                                            .link);
+                                                    if (selected_dalle_id ==
+                                                        -1) {
+                                                    } else {
+                                                      ProjectAPI.selectImage(
+                                                          draftId,
+                                                          selected_dalle_id);
+                                                    }
+                                                    setState(() {
+                                                      selected_dalle_id =
+                                                          generatedThumbnailImage[
+                                                                  index]!
+                                                              .imageId;
+                                                    });
+                                                  },
+                                                  child: Container(
+                                                      decoration: BoxDecoration(
+                                                          border: Border.all(
+                                                              width: 2,
+                                                              color: generatedThumbnailImage[
+                                                                              index]!
+                                                                          .imageId ==
+                                                                      selected_dalle_id
+                                                                  ? Colors.blue
+                                                                  : Colors
+                                                                      .transparent)),
+                                                      height: 64,
+                                                      width: 64,
+                                                      child: Image.network(
+                                                          generatedThumbnailImage[
+                                                                  index]!
+                                                              .link)),
+                                                );
+                                              },
+                                            ),
+                                          ),
                                   ]),
                                 ),
                               )
@@ -1240,14 +1359,14 @@ class _ResultScreenState extends State<ResultScreen>
                                       ],
                                     ).createShader(bounds),
                                     child: const Icon(
-                                      Icons.add_chart,
+                                      Icons.image,
                                       size: 28,
                                       color: Colors.blue,
                                     ),
                                   ),
                                   onTap: () {
                                     // Handle add chart button press
-                                    //  toggleBoxVisibility(); // Toggle the box visibility
+                                    toggleBoxVisibility(); // Toggle the box visibility
                                   },
                                 ),
                               ],

@@ -24,8 +24,14 @@ class _BuildScreenState extends State<BuildScreen>
   bool indexRender = false;
   String projectName = "";
   late int projectId;
-  bool selectedInformationListisEmpty = false;
+  bool selectedInformationListisExeed = false;
   bool isAllSelected = false;
+  List<String> candidate = [
+    "전기자동차 시장 전망과 국내 자동차 동향",
+    "어업 실태조사",
+    "국내 제조업 동향",
+    "농민 평균 소득과 국민 평균 소득의 비교"
+  ];
   @override
   void initState() {
     super.initState();
@@ -144,7 +150,7 @@ class _BuildScreenState extends State<BuildScreen>
                               height: 12,
                             ),
                             const Text(
-                                "다음과 같이 자료를 찾아봤어요!\n원하시는 자료를 선택해주시면 선택하신 자료를 Agent가 학습해 보고서 작성을 도와드려요",
+                                "다음과 같이 자료를 찾아봤어요!\n원하시는 자료를 선택해주시면 선택하신 자료를 Agent가 학습해 보고서 작성을 도와드려요!\n현재는 3개까지의 자료 선택을 지원해 드려요!",
                                 textAlign: TextAlign.left,
                                 style: TextStyle(
                                     color: Colors.grey,
@@ -154,33 +160,33 @@ class _BuildScreenState extends State<BuildScreen>
                               height: 8,
                             ),
                             const Divider(color: Colors.grey),
-                            const SizedBox(
-                              height: 8,
-                            ),
-                            SizedBox(
-                              //width: MediaQuery.of(context).size.width ,
-                              child: Row(
-                                children: [
-                                  Checkbox(
-                                    checkColor: Colors.white,
-                                    activeColor: Colors.blue,
-                                    value: isAllSelected,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        isAllSelected = !isAllSelected;
-                                        for (var item in informationList) {
-                                          item.isSelected = isAllSelected;
-                                        }
-                                      });
-                                    },
-                                  ),
-                                  Text(
-                                    isAllSelected ? '전체 해제' : '전체 선택',
-                                    style: const TextStyle(color: Colors.white),
-                                  ),
-                                ],
-                              ),
-                            ),
+                            // const SizedBox(
+                            //   height: 8,
+                            // ),
+                            // SizedBox(
+                            //   //width: MediaQuery.of(context).size.width ,
+                            //   child: Row(
+                            //     children: [
+                            //       Checkbox(
+                            //         checkColor: Colors.white,
+                            //         activeColor: Colors.blue,
+                            //         value: isAllSelected,
+                            //         onChanged: (value) {
+                            //           setState(() {
+                            //             isAllSelected = !isAllSelected;
+                            //             for (var item in informationList) {
+                            //               item.isSelected = isAllSelected;
+                            //             }
+                            //           });
+                            //         },
+                            //       ),
+                            //       Text(
+                            //         isAllSelected ? '전체 해제' : '전체 선택',
+                            //         style: const TextStyle(color: Colors.white),
+                            //       ),
+                            //     ],
+                            //   ),
+                            // ),
                             const SizedBox(
                               height: 12,
                             ),
@@ -310,7 +316,7 @@ class _BuildScreenState extends State<BuildScreen>
                                     },
                                   )),
                             ),
-                            if (selectedInformationListisEmpty)
+                            if (selectedInformationListisExeed)
                               const Padding(
                                 padding: EdgeInsets.only(top: 8.0),
                                 child: Row(
@@ -320,7 +326,7 @@ class _BuildScreenState extends State<BuildScreen>
                                     Icon(Icons.warning_amber_rounded,
                                         color: Colors.red),
                                     SizedBox(width: 12),
-                                    Text("하나 이상의 자료를 선택해주세요!",
+                                    Text("세개 이하의 자료를 선택해주세요!",
                                         style: TextStyle(color: Colors.red)),
                                   ],
                                 ),
@@ -444,6 +450,52 @@ class _BuildScreenState extends State<BuildScreen>
                                         textAlign: TextAlign.left,
                                       ),
                                       const SizedBox(height: 12),
+                                      if (!indexRender)
+                                        SizedBox(
+                                          height: 36,
+                                          child: GridView.builder(
+                                              gridDelegate:
+                                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                                      crossAxisCount:
+                                                          MediaQuery.of(context)
+                                                                      .size
+                                                                      .width >
+                                                                  1000
+                                                              ? 4
+                                                              : 2, // 한 줄에 세 개의 열
+                                                      mainAxisSpacing: 12,
+                                                      mainAxisExtent: 36,
+                                                      crossAxisSpacing: 12),
+                                              itemCount: candidate.length,
+                                              itemBuilder: (context, index) {
+                                                return InkWell(
+                                                    onTap: () {
+                                                      purposeController.text =
+                                                          candidate[index];
+                                                    },
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                        color: Colors
+                                                            .grey.shade700,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(8),
+                                                      ),
+                                                      child: Center(
+                                                        child: Text(
+                                                            candidate[index],
+                                                            textAlign: TextAlign
+                                                                .center,
+                                                            style:
+                                                                const TextStyle(
+                                                                    color: Colors
+                                                                        .white)),
+                                                      ),
+                                                    ));
+                                              }),
+                                        ),
+                                      if (!indexRender)
+                                        const SizedBox(height: 12),
                                       Container(
                                         decoration: BoxDecoration(
                                           borderRadius:
@@ -527,9 +579,9 @@ class _BuildScreenState extends State<BuildScreen>
             if (getSuggestion) {
               List<Information> selectedInformationList =
                   informationList.where((info) => info.isSelected).toList();
-              if (selectedInformationList.isEmpty) {
+              if (selectedInformationList.length > 3) {
                 setState(() {
-                  selectedInformationListisEmpty = true;
+                  selectedInformationListisExeed = true;
                 });
               } else {
                 ProjectAPI.selectSuggestion(projectId, selectedInformationList);
